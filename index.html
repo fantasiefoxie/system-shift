@@ -1,10 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>System Shift</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <h1>System Shift</h1>
-    <p>Game initializing...</p>
+
+<header>
+    <div class="title-row">
+        <h1>System Shift</h1>
+        <button id="startBtn">Start</button>
+    </div>
+
+    <div class="system-stats">
+        <div class="stat">
+            <div class="stat-label">Round</div>
+            <div class="stat-value" id="roundStat">1</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Political Capital</div>
+            <div class="stat-value" id="pcStat">5 / 8</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Momentum</div>
+            <div class="stat-value" id="momentumStat">0</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Optimism</div>
+            <div class="stat-value" id="optimismStat">0</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Structural Pressure</div>
+            <div class="stat-value" id="pressureStat">0</div>
+        </div>
+    </div>
+</header>
+
+
+<main class="game-container">
+
+    <!-- TRACKS -->
+    <section class="tracks-zone">
+        <div id="trackGrid" class="track-grid"></div>
+    </section>
+
+    <!-- JOKERS -->
+    <section id="jokerZone" class="joker-zone"></section>
+
+    <!-- HAND -->
+    <section class="hand-zone">
+        <div id="hand"></div>
+    </section>
+
+    <!-- COMMENTARY -->
+    <section class="commentary-zone">
+        <div id="commentary"></div>
+    </section>
+
+</main>
+
+<script type="module" src="./main.js"></script>
+
 </body>
 </html>
