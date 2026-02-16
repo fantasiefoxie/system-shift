@@ -1,5 +1,5 @@
 /* ================================================= */
-/* SYSTEM SHIFT – MAIN (FINAL STABLE + ENDINGS)     */
+/* SYSTEM SHIFT – MAIN (FULL STABLE HALO BUILD)     */
 /* ================================================= */
 
 import { gameState } from "./game/state.js";
@@ -15,12 +15,23 @@ const startBtn = document.getElementById("startBtn");
 const nextRoundBtn = document.getElementById("nextRoundBtn");
 const exportBtn = document.getElementById("exportLogBtn");
 
-const trackGrid = document.getElementById("trackGrid");
 const handDiv = document.getElementById("hand");
 
+/* Halo Stat Elements */
 const roundStat = document.getElementById("roundStat");
 const momentumStat = document.getElementById("momentumStat");
 const capitalStat = document.getElementById("capitalStat");
+const pressureStat = document.getElementById("pressureStat");
+
+/* Track Halo Containers (must exist in HTML) */
+const trackElements = {
+    wellbeing: document.getElementById("track-wellbeing"),
+    planet: document.getElementById("track-planet"),
+    community: document.getElementById("track-community"),
+    power: document.getElementById("track-power"),
+    wealth: document.getElementById("track-wealth"),
+    tension: document.getElementById("track-tension")
+};
 
 /* ================================================= */
 /* START GAME                                       */
@@ -110,7 +121,7 @@ function render() {
 }
 
 /* ================================================= */
-/* STATS                                            */
+/* UPDATE HALO STATS                                */
 /* ================================================= */
 
 function updateStats() {
@@ -118,29 +129,32 @@ function updateStats() {
     if (roundStat) roundStat.textContent = gameState.round;
     if (momentumStat) momentumStat.textContent = gameState.momentum;
     if (capitalStat) capitalStat.textContent = gameState.politicalCapital;
+
+    if (pressureStat) {
+        pressureStat.textContent = gameState.pressure?.value || 0;
+    }
 }
 
 /* ================================================= */
-/* TRACKS                                           */
+/* UPDATE TRACK HALOS                               */
 /* ================================================= */
 
 function renderTracks() {
 
-    if (!trackGrid) return;
+    Object.entries(trackElements).forEach(([key, el]) => {
 
-    trackGrid.innerHTML = "";
+        if (!el) return;
 
-    Object.entries(gameState.tracks).forEach(([key, value]) => {
+        const value = gameState.tracks[key];
 
-        const pill = document.createElement("div");
-        pill.classList.add("track-pill");
+        el.querySelector(".halo-value").textContent = value;
 
-        pill.innerHTML = `
-            <div class="pill-label">${key}</div>
-            <div class="pill-value">${value}</div>
-        `;
-
-        trackGrid.appendChild(pill);
+        // Optional: update fill ring
+        const ring = el.querySelector(".halo-ring");
+        if (ring) {
+            const percent = Math.min(100, Math.max(0, value * 5));
+            ring.style.setProperty("--fill", `${percent}%`);
+        }
     });
 }
 
@@ -172,8 +186,13 @@ function renderHand() {
                     <div>Wealth: ${gameState.tracks.wealth}</div>
                     <div>Tension: ${gameState.tracks.tension}</div>
                 </div>
+
+                <button id="restartBtn">Restart Cycle</button>
             </div>
         `;
+
+        document.getElementById("restartBtn")
+            .addEventListener("click", startGame);
 
         return;
     }
@@ -225,12 +244,12 @@ function renderHand() {
 }
 
 /* ================================================= */
-/* ENDING EVALUATION                                */
+/* ENDING LOGIC                                     */
 /* ================================================= */
 
 function evaluateEnding() {
 
-    const { wellbeing, planet, community, wealth, tension } = gameState.tracks;
+    const { wellbeing, planet, community, tension } = gameState.tracks;
 
     const socialScore = wellbeing + community;
     const ecoScore = planet;
@@ -239,7 +258,7 @@ function evaluateEnding() {
     if (stress >= 18) {
         return {
             type: "SYSTEM COLLAPSE",
-            message: "Escalating tension fractured the transition. Institutions destabilized."
+            message: "Escalating tension fractured the transition."
         };
     }
 
@@ -266,7 +285,7 @@ function evaluateEnding() {
 
     return {
         type: "SYSTEM DRIFT",
-        message: "Partial reform. Power remained largely intact."
+        message: "Partial reform. Power remained intact."
     };
 }
 

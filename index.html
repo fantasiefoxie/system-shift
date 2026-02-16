@@ -7,21 +7,84 @@
 </head>
 <body>
 
+<div id="app">
+
+    <!-- TOP ROW -->
     <div class="top-bar">
-        <div>Round: <span id="roundStat"></span></div>
-        <div>Capital: <span id="capitalStat"></span></div>
-        <div>Momentum: <span id="momentumStat"></span></div>
-        <div>Pressure: <span id="pressureStat"></span></div>
+        <div class="halo-stat">
+            <div class="halo-label">Round</div>
+            <div id="roundStat" class="halo-value"></div>
+        </div>
+
+        <div class="halo-stat">
+            <div class="halo-label">Capital</div>
+            <div id="capitalStat" class="halo-value"></div>
+        </div>
+
+        <div class="halo-stat">
+            <div class="halo-label">Momentum</div>
+            <div id="momentumStat" class="halo-value"></div>
+        </div>
+
+        <div class="halo-stat">
+            <div class="halo-label">Pressure</div>
+            <div id="pressureStat" class="halo-value"></div>
+        </div>
     </div>
 
-    <div id="trackGrid"></div>
+    <!-- TRACK HALOS -->
+    <div class="track-row">
 
-    <div id="hand"></div>
+        <div id="track-wellbeing" class="track-halo">
+            <div class="halo-label">Wellbeing</div>
+            <div class="halo-ring"></div>
+            <div class="halo-value"></div>
+        </div>
 
-    <button id="exportLogBtn">Export Log</button>
-    <button id="nextRoundBtn">Next Round</button>
+        <div id="track-planet" class="track-halo planet">
+            <div class="halo-label">Planet</div>
+            <div class="halo-ring"></div>
+            <div class="halo-value"></div>
+        </div>
 
-    <script type="module" src="main.js"></script>
+        <div id="track-community" class="track-halo community">
+            <div class="halo-label">Community</div>
+            <div class="halo-ring"></div>
+            <div class="halo-value"></div>
+        </div>
+
+        <div id="track-power" class="track-halo power">
+            <div class="halo-label">Power</div>
+            <div class="halo-ring"></div>
+            <div class="halo-value"></div>
+        </div>
+
+        <div id="track-wealth" class="track-halo wealth">
+            <div class="halo-label">Wealth</div>
+            <div class="halo-ring"></div>
+            <div class="halo-value"></div>
+        </div>
+
+        <div id="track-tension" class="track-halo tension">
+            <div class="halo-label">Tension</div>
+            <div class="halo-ring"></div>
+            <div class="halo-value"></div>
+        </div>
+
+    </div>
+
+    <!-- CARD ROW -->
+    <div id="hand" class="card-row"></div>
+
+    <!-- CONTROLS -->
+    <div id="controls">
+        <button id="exportLogBtn">Export Log</button>
+        <button id="nextRoundBtn">Next Round</button>
+    </div>
+
+</div>
+
+<script type="module" src="main.js"></script>
 
 </body>
 </html>
