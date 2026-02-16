@@ -1,255 +1,208 @@
-// game/jokerSystem.js
+/* ================================================= */
+/* SYSTEM SHIFT – JOKER SYSTEM v1.0.0               */
+/* ================================================= */
 
 import { gameState } from "./state.js";
-
-/* ================================================= */
-/* JOKER DEFINITIONS */
-/* ================================================= */
+import { logEvent } from "./logger.js";
 
 /*
-Types:
-- movement (player aligned)
-- institutional (structural parasites)
-- crisis (temporary shocks)
+JOKER TYPES
+-----------
+type: "structural"  → permanent modifier
+type: "parasite"    → negative systemic force
+type: "catalyst"    → emergency amplifier / stabilizer
 */
 
-export const ALL_JOKERS = [
+/* ================================================= */
+/* INITIAL JOKER POOL                               */
+/* ================================================= */
 
-    /* ================= MOVEMENT ================= */
+export function initializeJokers() {
 
-    {
-        id: "unionWave",
-        type: "movement",
-        name: "Union Wave",
-        description: "+1 Political Capital recovery per round",
-        applyRoundStart() {
-            gameState.politicalCapital += 1;
-        }
-    },
+    gameState.jokerDeck = [
 
-    {
-        id: "mutualAid",
-        type: "movement",
-        name: "Mutual Aid Network",
-        description: "+1 Wellbeing per round",
-        applyRoundStart() {
-            gameState.tracks.wellbeing += 1;
-        }
-    },
+        /* ---------------------------- */
+        /* STRUCTURAL POSITIVE          */
+        /* ---------------------------- */
 
-    {
-        id: "climateSurge",
-        type: "movement",
-        name: "Climate Surge",
-        description: "High-risk planet cards gain +1 planet",
-        modifyCard(card, effects) {
-            if (card.suit === "planet" && card.risk === "high") {
-                effects.planet = (effects.planet || 0) + 1;
-            }
-        }
-    },
-
-    {
-        id: "grassrootsMomentum",
-        type: "movement",
-        name: "Grassroots Momentum",
-        description: "+1 momentum when playing community cards",
-        onCardPlay(card) {
-            if (card.suit === "community") {
+        {
+            id: "solidarity_networks",
+            type: "structural",
+            name: "Solidarity Networks",
+            effect: () => {
                 gameState.momentum += 1;
             }
-        }
-    },
+        },
 
+        {
+            id: "institutional_memory",
+            type: "structural",
+            name: "Institutional Memory",
+            effect: () => {
+                gameState.structuralPressure = Math.max(
+                    0,
+                    gameState.structuralPressure - 1
+                );
+            }
+        },
 
-    /* ================= INSTITUTIONAL ================= */
+        /* ---------------------------- */
+        /* PARASITE                    */
+        /* ---------------------------- */
 
-    {
-        id: "eliteConsolidation",
-        type: "institutional",
-        name: "Elite Consolidation",
-        description: "-1 max Political Capital",
-        applyPersistent() {
-            gameState.maxPoliticalCapital =
-                Math.max(3, gameState.maxPoliticalCapital - 1);
-        }
-    },
+        {
+            id: "elite_capture",
+            type: "parasite",
+            name: "Elite Capture",
+            effect: () => {
+                gameState.parasiteLevel += 1;
+            }
+        },
 
-    {
-        id: "mediaCapture",
-        type: "institutional",
-        name: "Media Capture",
-        description: "Random card effect reduced by 1",
-        modifyCard(card, effects) {
-            const keys = Object.keys(effects);
-            if (keys.length === 0) return;
-            const k = keys[Math.floor(Math.random() * keys.length)];
-            effects[k] -= 1;
-        }
-    },
-
-    {
-        id: "securityState",
-        type: "institutional",
-        name: "Security State",
-        description: "+1 tension on high-risk plays",
-        onCardPlay(card) {
-            if (card.risk === "high") {
+        {
+            id: "media_distortion",
+            type: "parasite",
+            name: "Media Distortion",
+            effect: () => {
                 gameState.tracks.tension += 1;
             }
+        },
+
+        /* ---------------------------- */
+        /* CATALYST                    */
+        /* ---------------------------- */
+
+        {
+            id: "grassroots_wave",
+            type: "catalyst",
+            name: "Grassroots Wave",
+            effect: () => {
+                if (gameState.momentum > gameState.structuralPressure) {
+                    gameState.tracks.community += 2;
+                }
+            }
         }
-    },
 
+    ];
 
-    /* ================= CRISIS ================= */
+    logEvent("JOKERS_INITIALIZED", {
+        count: gameState.jokerDeck.length
+    });
+}
 
-    {
-        id: "financialShock",
-        type: "crisis",
-        duration: 2,
-        name: "Financial Shock",
-        description: "-2 wealth per round",
-        applyRoundStart() {
-            gameState.tracks.wealth -= 2;
-        }
-    },
+/* ================================================= */
+/* APPLY ACTIVE JOKERS EACH ROUND                   */
+/* ================================================= */
 
-    {
-        id: "climateDisaster",
-        type: "crisis",
-        duration: 2,
-        name: "Climate Disaster",
-        description: "-2 planet per round",
-        applyRoundStart() {
-            gameState.tracks.planet -= 2;
-        }
+export function applyActiveJokers() {
+
+    gameState.activeJokers.forEach(joker => {
+        joker.effect();
+        logEvent("JOKER_EFFECT_APPLIED", {
+            id: joker.id
+        });
+    });
+}
+
+/* ================================================= */
+/* PARASITE GROWTH                                  */
+/* ================================================= */
+
+export function parasiteGrowthPhase() {
+
+    // Base growth under structural pressure
+    if (gameState.structuralPressure > 10) {
+        gameState.parasiteLevel += 1;
     }
-];
 
+    // Growth under high wealth concentration
+    if (
+        gameState.tracks.wealth > 85 &&
+        gameState.tracks.power > gameState.tracks.community
+    ) {
+        gameState.parasiteLevel += 1;
+    }
+
+    // Emergency accelerates parasite
+    if (gameState.emergencyActive) {
+        gameState.parasiteLevel += 1;
+    }
+
+    gameState.parasiteLevel = Math.min(50, gameState.parasiteLevel);
+
+    logEvent("PARASITE_GROWTH", {
+        parasiteLevel: gameState.parasiteLevel
+    });
+}
 
 /* ================================================= */
-/* JOKER HELPERS */
+/* BLEED TO PURGE (Manual Strategy)                 */
 /* ================================================= */
 
-export function addJokerById(id) {
-    const joker = ALL_JOKERS.find(j => j.id === id);
+export function purgeParasite() {
+
+    if (gameState.parasiteLevel <= 0) return false;
+
+    // Cost scales with parasite level
+    const cost = Math.min(10, Math.ceil(gameState.parasiteLevel / 3));
+
+    if (gameState.politicalCapital < cost) return false;
+
+    gameState.politicalCapital -= cost;
+    gameState.parasiteLevel -= 3;
+
+    gameState.parasiteLevel = Math.max(0, gameState.parasiteLevel);
+
+    logEvent("PARASITE_PURGED", {
+        cost,
+        parasiteLevel: gameState.parasiteLevel
+    });
+
+    return true;
+}
+
+/* ================================================= */
+/* UNLOCK JOKER                                     */
+/* ================================================= */
+
+export function unlockJoker(criteria) {
+
+    const joker = gameState.jokerDeck.find(j => j.id === criteria);
+
     if (!joker) return;
 
-    if (joker.type === "movement") {
-        gameState.activeJokers.push({ ...joker });
-    }
+    gameState.activeJokers.push(joker);
 
-    if (joker.type === "institutional") {
-        gameState.institutionalJokers.push({ ...joker });
-    }
-
-    if (joker.type === "crisis") {
-        gameState.crisisJokers.push({ ...joker });
-    }
-}
-
-
-/* ================================================= */
-/* APPLY ROUND START EFFECTS */
-/* ================================================= */
-
-export function applyRoundStartJokers() {
-
-    [...gameState.activeJokers,
-     ...gameState.institutionalJokers,
-     ...gameState.crisisJokers].forEach(joker => {
-
-        if (joker.applyRoundStart) {
-            joker.applyRoundStart();
-        }
-    });
-
-    // Crisis decay
-    gameState.crisisJokers = gameState.crisisJokers.filter(j => {
-        if (j.duration !== undefined) {
-            j.duration -= 1;
-            return j.duration > 0;
-        }
-        return true;
+    logEvent("JOKER_UNLOCKED", {
+        id: joker.id
     });
 }
 
-
 /* ================================================= */
-/* MODIFY CARD EFFECTS */
-/* ================================================= */
-
-export function applyCardModifiers(card, effects) {
-
-    [...gameState.activeJokers,
-     ...gameState.institutionalJokers].forEach(joker => {
-
-        if (joker.modifyCard) {
-            joker.modifyCard(card, effects);
-        }
-    });
-}
-
-
-/* ================================================= */
-/* CARD PLAY TRIGGERS */
+/* EMERGENCY PERFORMANCE TRACKING                   */
 /* ================================================= */
 
-export function triggerOnCardPlay(card) {
+export function evaluateEmergencyPerformance() {
 
-    [...gameState.activeJokers,
-     ...gameState.institutionalJokers].forEach(joker => {
+    if (!gameState.emergencyActive) return;
 
-        if (joker.onCardPlay) {
-            joker.onCardPlay(card);
-        }
-    });
-}
+    let score = 0;
 
+    if (gameState.tracks.wellbeing > 50) score += 1;
+    if (gameState.tracks.community > 50) score += 1;
+    if (gameState.momentum > gameState.structuralPressure) score += 1;
 
-/* ================================================= */
-/* SYSTEM SPAWN LOGIC */
-/* ================================================= */
+    if (score >= 2) {
+        // Boost after emergency
+        gameState.momentum += 3;
+        gameState.parasiteLevel = Math.max(0, gameState.parasiteLevel - 2);
 
-export function evaluateStructuralSpawns() {
-
-    /* Elite concentration trigger */
-    if (
-        gameState.tracks.wealth > 20 &&
-        gameState.tracks.power > gameState.tracks.community &&
-        gameState.tracks.tension > 15
-    ) {
-        addJokerById("eliteConsolidation");
+        logEvent("EMERGENCY_SUCCESS", { score });
+    } else {
+        // Dip after emergency
+        gameState.structuralPressure += 2;
+        logEvent("EMERGENCY_FAILURE", { score });
     }
 
-    /* High structural pressure */
-    if (gameState.structuralPressure > 15) {
-        addJokerById("mediaCapture");
-    }
-
-    /* Crisis trigger */
-    if (
-        gameState.tracks.tension > 25 &&
-        gameState.momentum < 5
-    ) {
-        addJokerById("financialShock");
-    }
-}
-
-
-/* ================================================= */
-/* MANUAL BLEED (REMOVE PARASITE) */
-/* ================================================= */
-
-export function removeInstitutionalJoker(index) {
-
-    if (!gameState.institutionalJokers[index]) return;
-
-    // Bleed cost
-    if (gameState.politicalCapital < 3) return;
-
-    gameState.politicalCapital -= 3;
-    gameState.tracks.tension += 2;
-
-    gameState.institutionalJokers.splice(index, 1);
+    gameState.emergencyActive = false;
 }

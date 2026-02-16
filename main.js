@@ -1,12 +1,20 @@
+/* ================================================= */
+/* SYSTEM SHIFT – MAIN (RESEARCH VERSION) */
+/* ================================================= */
+
 import { gameState } from "./game/state.js";
-import { baseDeck, shuffleDeck } from "./game/deck.js";
+import { baseDeck, shuffleDeck, drawCard } from "./game/deck.js";
 import { playCard, endRound } from "./game/round.js";
+import { checkThresholds, checkPressureReveal } from "./game/pressure.js";
+import { checkResistancePhase } from "./game/resistance.js";
 import { runSimulation } from "./game/simulation.js";
 import { getReflectiveQuestion } from "./game/endings.js";
-import { generateCommentary } from "./game/commentary.js";
+
 import {
-    removeInstitutionalJoker
-} from "./game/jokerSystem.js";
+    initLogger,
+    logEvent,
+    exportLog
+} from "./game/logger.js";
 
 
 /* ================================================= */
@@ -14,76 +22,92 @@ import {
 /* ================================================= */
 
 const startBtn = document.getElementById("startBtn");
+const exportBtn = document.getElementById("exportLogsBtn");
+
 const trackGrid = document.getElementById("trackGrid");
 const handDiv = document.getElementById("hand");
 
 const roundStat = document.getElementById("roundStat");
 const momentumStat = document.getElementById("momentumStat");
 const pressureStat = document.getElementById("pressureStat");
-const pcStat = document.getElementById("pcStat");
-const optimismStat = document.getElementById("optimismStat");
-
-const jokerZone = document.getElementById("jokerZone");
+const capitalStat = document.getElementById("capitalStat");
 
 let finalResult = null;
 
-startBtn.addEventListener("click", startGame);
-
 
 /* ================================================= */
-/* START / RESET */
+/* START GAME */
 /* ================================================= */
 
-function startGame() {
+startBtn.addEventListener("click", () => {
 
-    gameState.round = 1;
-    gameState.gameOver = false;
-    gameState.shiftProgress = 0;
+    const seedInput = document.getElementById("seedInput");
+    const seed = seedInput.value || Date.now().toString();
 
-    gameState.momentum = 0;
-    gameState.optimism = 0;
+    initLogger(seed);
 
-    gameState.politicalCapital = 5;
-    gameState.maxPoliticalCapital = 8;
+    logEvent("game_started", { seed });
 
-    gameState.structuralPressure = 0;
-    gameState.surfacePressure = 0;
+    startGame(seed);
+});
 
-    gameState.activeJokers = [];
-    gameState.institutionalJokers = [];
-    gameState.crisisJokers = [];
+if (exportBtn) {
+    exportBtn.addEventListener("click", exportLog);
+}
+
+
+function startGame(seed) {
+
+    /* RESET STATE */
+
+    Object.assign(gameState, {
+        round: 1,
+        gameOver: false,
+        shiftProgress: 0,
+        resistancePhase: false,
+        modifiers: [],
+        structuralPressure: 0,
+        surfacePressure: 0,
+        momentum: 0,
+        debtRoundsActive: 0,
+        playsThisRound: 0,
+        politicalCapital: gameState.maxPoliticalCapital
+    });
 
     finalResult = null;
 
-    gameState.deck = shuffleDeck([...baseDeck]);
-    gameState.playerHand = [];
+    gameState.deck = shuffleDeck(baseDeck);
     gameState.discardPile = [];
+    gameState.playerHand = [];
 
-    drawCards(gameState.handSize);
+    logEvent("deck_initialized", {
+        size: gameState.deck.length
+    });
+
+    drawHand(gameState.handSize);
+
     render();
 }
 
 
 /* ================================================= */
-/* DRAW */
+/* DRAW HAND */
 /* ================================================= */
 
-function drawCards(count) {
+function drawHand(count) {
 
     for (let i = 0; i < count; i++) {
 
-        if (gameState.deck.length === 0 && gameState.discardPile.length > 0) {
+        const card = drawCard(gameState);
 
-            gameState.deck = shuffleDeck([...gameState.discardPile]);
-            gameState.discardPile = [];
-
-            gameState.tracks.tension += 1;
-            gameState.pressure.value += 1;
+        if (card) {
+            gameState.playerHand.push(card);
         }
-
-        const card = gameState.deck.pop();
-        if (card) gameState.playerHand.push(card);
     }
+
+    logEvent("hand_drawn", {
+        size: gameState.playerHand.length
+    });
 }
 
 
@@ -101,12 +125,11 @@ function render() {
     updateSystemStats();
     renderTracks();
     renderHand();
-    renderJokers();
 }
 
 
 /* ================================================= */
-/* SYSTEM SNAPSHOT */
+/* SYSTEM STATS */
 /* ================================================= */
 
 function updateSystemStats() {
@@ -114,16 +137,12 @@ function updateSystemStats() {
     roundStat.textContent = gameState.round;
     momentumStat.textContent = gameState.momentum;
     pressureStat.textContent = gameState.structuralPressure;
-
-    pcStat.textContent =
-        `${gameState.politicalCapital} / ${gameState.maxPoliticalCapital}`;
-
-    optimismStat.textContent = gameState.optimism;
+    capitalStat.textContent = gameState.politicalCapital;
 }
 
 
 /* ================================================= */
-/* TRACK PILLS */
+/* TRACK DISPLAY */
 /* ================================================= */
 
 function renderTracks() {
@@ -137,7 +156,7 @@ function renderTracks() {
 
         pill.innerHTML = `
             <div class="pill-label">${capitalize(key)}</div>
-            <div class="pill-value">${value}</div>
+            <div class="pill-value">${value}%</div>
         `;
 
         trackGrid.appendChild(pill);
@@ -163,38 +182,38 @@ function renderHand() {
         cardDiv.classList.add("card", card.suit);
 
         cardDiv.innerHTML = `
-            <div class="risk-badge risk-${card.risk}">
-                ${card.risk.toUpperCase()}
-            </div>
-
-            <div class="cost-badge">
-                COST: ${card.cost}
-            </div>
-
             <div class="card-title">${card.title}</div>
-
+            <div class="card-cost">Cost: ${card.cost}</div>
             <div class="card-body">
                 ${Object.entries(card.effects)
                     .map(([key, value]) => {
-                        const cls = value >= 0
-                            ? "effect-positive"
-                            : "effect-negative";
-                        return `<p class="${cls}">
-                            ${key}: ${value}
-                        </p>`;
+                        const cls = value >= 0 ? "effect-positive" : "effect-negative";
+                        return `<p class="${cls}">${key}: ${value}</p>`;
                     })
                     .join("")}
             </div>
+            <button class="play-btn">Play</button>
         `;
 
-        cardDiv.addEventListener("click", () => {
+        const playBtn = cardDiv.querySelector(".play-btn");
+
+        playBtn.addEventListener("click", () => {
+
+            logEvent("card_play_attempt", {
+                cardId: card.id,
+                capitalBefore: gameState.politicalCapital
+            });
 
             playCard(index);
 
-            const commentary =
-                generateCommentary("cardPlay", card);
+            checkThresholds();
+            checkPressureReveal();
+            checkResistancePhase();
 
-            renderCommentary(commentary);
+            logEvent("card_played", {
+                cardId: card.id,
+                capitalAfter: gameState.politicalCapital
+            });
 
             render();
         });
@@ -205,63 +224,30 @@ function renderHand() {
 
 
 /* ================================================= */
-/* JOKER UI */
+/* ROUND END */
 /* ================================================= */
 
-function renderJokers() {
+document.addEventListener("keydown", (e) => {
 
-    jokerZone.innerHTML = "";
+    if (e.key === "r" && !gameState.gameOver) {
 
-    if (
-        gameState.activeJokers.length === 0 &&
-        gameState.institutionalJokers.length === 0 &&
-        gameState.crisisJokers.length === 0
-    ) return;
+        logEvent("round_end_initiated", {
+            round: gameState.round
+        });
 
-    const section = document.createElement("div");
-    section.classList.add("joker-section");
+        endRound();
 
-    /* Movement Jokers */
-    gameState.activeJokers.forEach(j => {
-        section.appendChild(createJokerCard(j, "movement"));
-    });
+        logEvent("round_ended", {
+            round: gameState.round,
+            capital: gameState.politicalCapital,
+            momentum: gameState.momentum
+        });
 
-    /* Institutional Jokers */
-    gameState.institutionalJokers.forEach((j, index) => {
+        drawHand(gameState.handSize);
 
-        const card = createJokerCard(j, "institutional");
-
-        const bleedBtn = document.createElement("button");
-        bleedBtn.textContent = "Bleed (3 PC)";
-        bleedBtn.onclick = () => {
-            removeInstitutionalJoker(index);
-            render();
-        };
-
-        card.appendChild(bleedBtn);
-        section.appendChild(card);
-    });
-
-    /* Crisis Jokers */
-    gameState.crisisJokers.forEach(j => {
-        section.appendChild(createJokerCard(j, "crisis"));
-    });
-
-    jokerZone.appendChild(section);
-}
-
-function createJokerCard(joker, type) {
-
-    const div = document.createElement("div");
-    div.classList.add("joker-card", type);
-
-    div.innerHTML = `
-        <div class="joker-name">${joker.name}</div>
-        <div class="joker-desc">${joker.description}</div>
-    `;
-
-    return div;
-}
+        render();
+    }
+});
 
 
 /* ================================================= */
@@ -296,63 +282,16 @@ function renderEnding() {
             <p>${result.timeline.aftermath}</p>
             <p>${result.timeline.memory}</p>
             <div class="ending-question">${question}</div>
-            <button id="restartBtn">Begin Again</button>
+            <button id="restartBtn">Restart</button>
         </div>
     `;
 
     document.getElementById("restartBtn")
-        .addEventListener("click", startGame);
+        .addEventListener("click", () => location.reload());
 
     handDiv.innerHTML = "";
+
+    logEvent("game_ended", {
+        metrics: result.metrics
+    });
 }
-
-
-/* ================================================= */
-/* COMMENTARY */
-/* ================================================= */
-
-function renderCommentary(message) {
-
-    if (!message) return;
-
-    const container = document.getElementById("commentary");
-
-    const previous = container.querySelector(".current");
-    if (previous) {
-        previous.classList.remove("current");
-        previous.classList.add("previous");
-    }
-
-    const div = document.createElement("div");
-    div.classList.add("commentary-block", "current");
-
-    div.innerHTML = `
-        <div class="headline">${message.headline}</div>
-        <div class="paragraph">${message.paragraph}</div>
-    `;
-
-    container.prepend(div);
-
-    setTimeout(() => div.classList.add("show"), 40);
-}
-
-
-/* ================================================= */
-/* KEYBOARD */
-/* ================================================= */
-
-document.addEventListener("keydown", (e) => {
-
-    if (e.key === "r" && !gameState.gameOver) {
-
-        endRound();
-
-        const commentary =
-            generateCommentary("roundEnd");
-
-        renderCommentary(commentary);
-
-        drawCards(gameState.handSize);
-        render();
-    }
-});
