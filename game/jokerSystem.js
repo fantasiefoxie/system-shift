@@ -3,7 +3,7 @@
 /* ================================================= */
 
 import { gameState } from "./state.js";
-import { logEvent } from "./logger.js";
+import { log } from "./logger.js";
 
 /*
 JOKER TYPES
@@ -85,7 +85,7 @@ export function initializeJokers() {
 
     ];
 
-    logEvent("JOKERS_INITIALIZED", {
+    log("JOKERS_INITIALIZED", {
         count: gameState.jokerDeck.length
     });
 }
@@ -98,7 +98,7 @@ export function applyActiveJokers() {
 
     gameState.activeJokers.forEach(joker => {
         joker.effect();
-        logEvent("JOKER_EFFECT_APPLIED", {
+        log("JOKER_EFFECT_APPLIED", {
             id: joker.id
         });
     });
@@ -130,7 +130,7 @@ export function parasiteGrowthPhase() {
 
     gameState.parasiteLevel = Math.min(50, gameState.parasiteLevel);
 
-    logEvent("PARASITE_GROWTH", {
+    log("PARASITE_GROWTH", {
         parasiteLevel: gameState.parasiteLevel
     });
 }
@@ -153,7 +153,7 @@ export function purgeParasite() {
 
     gameState.parasiteLevel = Math.max(0, gameState.parasiteLevel);
 
-    logEvent("PARASITE_PURGED", {
+    log("PARASITE_PURGED", {
         cost,
         parasiteLevel: gameState.parasiteLevel
     });
@@ -173,7 +173,7 @@ export function unlockJoker(criteria) {
 
     gameState.activeJokers.push(joker);
 
-    logEvent("JOKER_UNLOCKED", {
+    log("JOKER_UNLOCKED", {
         id: joker.id
     });
 }
@@ -197,11 +197,11 @@ export function evaluateEmergencyPerformance() {
         gameState.momentum += 3;
         gameState.parasiteLevel = Math.max(0, gameState.parasiteLevel - 2);
 
-        logEvent("EMERGENCY_SUCCESS", { score });
+        log("EMERGENCY_SUCCESS", { score });
     } else {
         // Dip after emergency
         gameState.structuralPressure += 2;
-        logEvent("EMERGENCY_FAILURE", { score });
+        log("EMERGENCY_FAILURE", { score });
     }
 
     gameState.emergencyActive = false;

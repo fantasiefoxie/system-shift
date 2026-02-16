@@ -3,7 +3,7 @@
 /* ================================================= */
 
 import { gameState } from "./state.js";
-import { logEvent } from "./logger.js";
+import { log } from "./logger.js";
 
 /*
 CRI (Crisis Risk Index)
@@ -93,7 +93,7 @@ export function recalculateCRI() {
 
     gameState.cri = Math.max(0, Math.round(cri));
 
-    logEvent("CRI_RECALCULATED", {
+    log("CRI_RECALCULATED", {
         cri: gameState.cri
     });
 }

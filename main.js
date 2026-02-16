@@ -1,216 +1,218 @@
 /* ================================================= */
-/* SYSTEM SHIFT – MAIN (RESEARCH VERSION) */
+/* SYSTEM SHIFT – MAIN (FINAL STABLE + ENDINGS)     */
 /* ================================================= */
 
 import { gameState } from "./game/state.js";
 import { baseDeck, shuffleDeck, drawCard } from "./game/deck.js";
 import { playCard, endRound } from "./game/round.js";
-import { checkThresholds, checkPressureReveal } from "./game/pressure.js";
-import { checkResistancePhase } from "./game/resistance.js";
-import { runSimulation } from "./game/simulation.js";
-import { getReflectiveQuestion } from "./game/endings.js";
-
-import {
-    initLogger,
-    logEvent,
-    exportLog
-} from "./game/logger.js";
-
+import { initLogger, log, exportLog } from "./game/logger.js";
 
 /* ================================================= */
-/* DOM REFERENCES */
+/* DOM REFERENCES                                   */
 /* ================================================= */
 
 const startBtn = document.getElementById("startBtn");
-const exportBtn = document.getElementById("exportLogsBtn");
+const nextRoundBtn = document.getElementById("nextRoundBtn");
+const exportBtn = document.getElementById("exportLogBtn");
 
 const trackGrid = document.getElementById("trackGrid");
 const handDiv = document.getElementById("hand");
 
 const roundStat = document.getElementById("roundStat");
 const momentumStat = document.getElementById("momentumStat");
-const pressureStat = document.getElementById("pressureStat");
 const capitalStat = document.getElementById("capitalStat");
 
-let finalResult = null;
-
-
 /* ================================================= */
-/* START GAME */
+/* START GAME                                       */
 /* ================================================= */
 
-startBtn.addEventListener("click", () => {
+function startGame() {
 
-    const seedInput = document.getElementById("seedInput");
-    const seed = seedInput.value || Date.now().toString();
+    const seed = Date.now().toString();
 
     initLogger(seed);
-
-    logEvent("game_started", { seed });
-
-    startGame(seed);
-});
-
-if (exportBtn) {
-    exportBtn.addEventListener("click", exportLog);
-}
-
-
-function startGame(seed) {
-
-    /* RESET STATE */
+    log("GAME_STARTED", { seed });
 
     Object.assign(gameState, {
         round: 1,
         gameOver: false,
-        shiftProgress: 0,
-        resistancePhase: false,
-        modifiers: [],
-        structuralPressure: 0,
-        surfacePressure: 0,
-        momentum: 0,
-        debtRoundsActive: 0,
         playsThisRound: 0,
-        politicalCapital: gameState.maxPoliticalCapital
+        politicalCapital: gameState.maxPoliticalCapital,
+        momentum: 0,
+        playerHand: [],
+        discardPile: []
     });
 
-    finalResult = null;
+    if (nextRoundBtn) nextRoundBtn.disabled = false;
 
-    gameState.deck = shuffleDeck(baseDeck);
-    gameState.discardPile = [];
-    gameState.playerHand = [];
-
-    logEvent("deck_initialized", {
-        size: gameState.deck.length
-    });
+    gameState.deck = shuffleDeck([...baseDeck]);
+    log("DECK_INITIALIZED", { size: gameState.deck.length });
 
     drawHand(gameState.handSize);
-
     render();
 }
 
+if (startBtn) startBtn.addEventListener("click", startGame);
+if (exportBtn) exportBtn.addEventListener("click", exportLog);
 
 /* ================================================= */
-/* DRAW HAND */
+/* DRAW HAND                                        */
 /* ================================================= */
 
 function drawHand(count) {
 
+    gameState.playerHand = [];
+
     for (let i = 0; i < count; i++) {
-
-        const card = drawCard(gameState);
-
-        if (card) {
-            gameState.playerHand.push(card);
-        }
+        const card = drawCard();
+        if (!card) break;
+        gameState.playerHand.push(card);
     }
 
-    logEvent("hand_drawn", {
-        size: gameState.playerHand.length
-    });
+    log("HAND_DRAWN", { size: gameState.playerHand.length });
 }
 
+/* ================================================= */
+/* ROUND HANDLER                                    */
+/* ================================================= */
+
+function handleEndRound() {
+
+    if (gameState.gameOver) return;
+
+    log("ROUND_END_INITIATED", { round: gameState.round });
+
+    endRound();
+
+    if (!gameState.gameOver) {
+        drawHand(gameState.handSize);
+    } else {
+        if (nextRoundBtn) nextRoundBtn.disabled = true;
+    }
+
+    render();
+}
+
+if (nextRoundBtn) nextRoundBtn.addEventListener("click", handleEndRound);
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "r") handleEndRound();
+});
 
 /* ================================================= */
-/* RENDER */
+/* RENDER                                           */
 /* ================================================= */
 
 function render() {
-
-    if (gameState.gameOver) {
-        renderEnding();
-        return;
-    }
-
-    updateSystemStats();
+    updateStats();
     renderTracks();
     renderHand();
 }
 
-
 /* ================================================= */
-/* SYSTEM STATS */
+/* STATS                                            */
 /* ================================================= */
 
-function updateSystemStats() {
+function updateStats() {
 
-    roundStat.textContent = gameState.round;
-    momentumStat.textContent = gameState.momentum;
-    pressureStat.textContent = gameState.structuralPressure;
-    capitalStat.textContent = gameState.politicalCapital;
+    if (roundStat) roundStat.textContent = gameState.round;
+    if (momentumStat) momentumStat.textContent = gameState.momentum;
+    if (capitalStat) capitalStat.textContent = gameState.politicalCapital;
 }
 
-
 /* ================================================= */
-/* TRACK DISPLAY */
+/* TRACKS                                           */
 /* ================================================= */
 
 function renderTracks() {
+
+    if (!trackGrid) return;
 
     trackGrid.innerHTML = "";
 
     Object.entries(gameState.tracks).forEach(([key, value]) => {
 
         const pill = document.createElement("div");
-        pill.classList.add("track-pill", key);
+        pill.classList.add("track-pill");
 
         pill.innerHTML = `
-            <div class="pill-label">${capitalize(key)}</div>
-            <div class="pill-value">${value}%</div>
+            <div class="pill-label">${key}</div>
+            <div class="pill-value">${value}</div>
         `;
 
         trackGrid.appendChild(pill);
     });
 }
 
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-
 /* ================================================= */
-/* HAND */
+/* HAND / ENDING                                    */
 /* ================================================= */
 
 function renderHand() {
 
+    if (!handDiv) return;
+
     handDiv.innerHTML = "";
+
+    if (gameState.gameOver) {
+
+        const ending = evaluateEnding();
+
+        handDiv.innerHTML = `
+            <div class="game-over">
+                <h2>END OF CYCLE</h2>
+                <div class="ending-type">${ending.type}</div>
+                <div class="ending-message">${ending.message}</div>
+
+                <div class="ending-stats">
+                    <div>Wellbeing: ${gameState.tracks.wellbeing}</div>
+                    <div>Planet: ${gameState.tracks.planet}</div>
+                    <div>Community: ${gameState.tracks.community}</div>
+                    <div>Power: ${gameState.tracks.power}</div>
+                    <div>Wealth: ${gameState.tracks.wealth}</div>
+                    <div>Tension: ${gameState.tracks.tension}</div>
+                </div>
+            </div>
+        `;
+
+        return;
+    }
 
     gameState.playerHand.forEach((card, index) => {
 
         const cardDiv = document.createElement("div");
-        cardDiv.classList.add("card", card.suit);
+        cardDiv.classList.add("card");
 
         cardDiv.innerHTML = `
             <div class="card-title">${card.title}</div>
             <div class="card-cost">Cost: ${card.cost}</div>
-            <div class="card-body">
+            <div class="card-effects">
                 ${Object.entries(card.effects)
-                    .map(([key, value]) => {
-                        const cls = value >= 0 ? "effect-positive" : "effect-negative";
-                        return `<p class="${cls}">${key}: ${value}</p>`;
+                    .map(([k, v]) => {
+                        const cls = v >= 0 ? "pos" : "neg";
+                        return `<div class="${cls}">${k}: ${v}</div>`;
                     })
                     .join("")}
             </div>
             <button class="play-btn">Play</button>
         `;
 
-        const playBtn = cardDiv.querySelector(".play-btn");
+        const btn = cardDiv.querySelector(".play-btn");
 
-        playBtn.addEventListener("click", () => {
+        if (gameState.politicalCapital < card.cost) {
+            btn.disabled = true;
+        }
 
-            logEvent("card_play_attempt", {
+        btn.addEventListener("click", () => {
+
+            log("CARD_PLAY_ATTEMPT", {
                 cardId: card.id,
                 capitalBefore: gameState.politicalCapital
             });
 
             playCard(index);
 
-            checkThresholds();
-            checkPressureReveal();
-            checkResistancePhase();
-
-            logEvent("card_played", {
+            log("CARD_PLAY_RESOLVED", {
                 cardId: card.id,
                 capitalAfter: gameState.politicalCapital
             });
@@ -222,76 +224,54 @@ function renderHand() {
     });
 }
 
-
 /* ================================================= */
-/* ROUND END */
-/* ================================================= */
-
-document.addEventListener("keydown", (e) => {
-
-    if (e.key === "r" && !gameState.gameOver) {
-
-        logEvent("round_end_initiated", {
-            round: gameState.round
-        });
-
-        endRound();
-
-        logEvent("round_ended", {
-            round: gameState.round,
-            capital: gameState.politicalCapital,
-            momentum: gameState.momentum
-        });
-
-        drawHand(gameState.handSize);
-
-        render();
-    }
-});
-
-
-/* ================================================= */
-/* ENDING */
+/* ENDING EVALUATION                                */
 /* ================================================= */
 
-function renderEnding() {
+function evaluateEnding() {
 
-    if (!finalResult) {
-        finalResult = runSimulation();
+    const { wellbeing, planet, community, wealth, tension } = gameState.tracks;
+
+    const socialScore = wellbeing + community;
+    const ecoScore = planet;
+    const stress = tension;
+
+    if (stress >= 18) {
+        return {
+            type: "SYSTEM COLLAPSE",
+            message: "Escalating tension fractured the transition. Institutions destabilized."
+        };
     }
 
-    const result = finalResult;
+    if (ecoScore >= 18 && stress < 15) {
+        return {
+            type: "ECOLOGICAL TRANSITION",
+            message: "Planetary repair gained structural momentum."
+        };
+    }
 
-    const finalState = {
-        SSI: result.metrics.SSI,
-        EE: result.metrics.EE,
-        EV: gameState.tracks.planet,
-        momentum: gameState.momentum,
-        power: gameState.tracks.power,
-        community: gameState.tracks.community,
-        structuralPressure: gameState.structuralPressure,
-        debtRoundsActive: gameState.debtRoundsActive,
-        wealth: gameState.tracks.wealth
+    if (socialScore >= 22 && stress < 15) {
+        return {
+            type: "SOCIAL TRANSFORMATION",
+            message: "Collective welfare reshaped systemic foundations."
+        };
+    }
+
+    if (stress < 12) {
+        return {
+            type: "MANAGED STABILITY",
+            message: "Reforms slowed collapse without full transformation."
+        };
+    }
+
+    return {
+        type: "SYSTEM DRIFT",
+        message: "Partial reform. Power remained largely intact."
     };
-
-    const question = getReflectiveQuestion(finalState);
-
-    trackGrid.innerHTML = `
-        <div class="ending-container">
-            <h2>End of Era</h2>
-            <p>${result.timeline.aftermath}</p>
-            <p>${result.timeline.memory}</p>
-            <div class="ending-question">${question}</div>
-            <button id="restartBtn">Restart</button>
-        </div>
-    `;
-
-    document.getElementById("restartBtn")
-        .addEventListener("click", () => location.reload());
-
-    handDiv.innerHTML = "";
-
-    logEvent("game_ended", {
-        metrics: result.metrics
-    });
 }
+
+/* ================================================= */
+/* AUTO START                                       */
+/* ================================================= */
+
+startGame();

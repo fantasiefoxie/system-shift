@@ -6,7 +6,7 @@
 // =====================================================
 
 import { gameState } from "./state.js";
-import { logEvent } from "./logger.js";
+import { log } from "./logger.js";
 
 /* ===================================================== */
 /* IMBALANCE CALCULATION */
@@ -31,7 +31,7 @@ export function calculateImbalance() {
 
     gameState.imbalance = imbalance;
 
-    logEvent("imbalance_calculated", { imbalance });
+    log("imbalance_calculated", { imbalance });
 
     return imbalance;
 }
@@ -61,7 +61,7 @@ export function updateEntropy() {
 
     gameState.entropy += entropyGain;
 
-    logEvent("entropy_update", {
+    log("entropy_update", {
         entropyGain,
         totalEntropy: gameState.entropy
     });
@@ -101,7 +101,7 @@ export function checkTrackExtremes() {
         gameState.entropy += collapse * 2;
     }
 
-    logEvent("extreme_check", {
+    log("extreme_check", {
         overflow,
         collapse,
         entropy: gameState.entropy
@@ -129,7 +129,7 @@ export function resolveEntropy() {
 
         gameState.entropy -= reduction;
 
-        logEvent("entropy_reform_reduction", {
+        log("entropy_reform_reduction", {
             reduction,
             remainingEntropy: gameState.entropy
         });
@@ -142,7 +142,7 @@ export function resolveEntropy() {
 
         gameState.structuralScar += 1;
 
-        logEvent("structural_scar_added", {
+        log("structural_scar_added", {
             structuralScar: gameState.structuralScar
         });
 
@@ -162,7 +162,7 @@ export function entropyNaturalDecay() {
 
     gameState.entropy -= decay;
 
-    logEvent("entropy_natural_decay", {
+    log("entropy_natural_decay", {
         decay,
         remainingEntropy: gameState.entropy
     });

@@ -1,94 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>System Shift</title>
-<link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <title>System Shift – Research Build</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<header class="top-bar">
-    <div class="left-cluster">
-        <div class="round-indicator">
-            Round <span id="roundStat">1</span>
-        </div>
+    <div class="top-bar">
+        <div>Round: <span id="roundStat"></span></div>
+        <div>Capital: <span id="capitalStat"></span></div>
+        <div>Momentum: <span id="momentumStat"></span></div>
+        <div>Pressure: <span id="pressureStat"></span></div>
     </div>
 
-    <div class="center-cluster">
-        <div class="capital-container">
-            <div id="capitalNumber">5</div>
-            <div id="capitalPips" class="capital-pips"></div>
-        </div>
-        <div class="momentum-indicator">
-            ⚡ <span id="momentumStat">0</span>
-        </div>
-    </div>
+    <div id="trackGrid"></div>
 
-    <div class="right-cluster">
-        <div class="pressure-indicator">
-            🏛 <span id="pressureStat">0</span>
-        </div>
-        <div id="emergencyBadge" class="emergency-badge hidden">
-            EMERGENCY
-        </div>
-    </div>
-</header>
+    <div id="hand"></div>
 
-<div class="tab-bar">
-    <button class="tab active" data-tab="play">Play</button>
-    <button class="tab" data-tab="analysis">Analysis</button>
-    <button class="tab" data-tab="logs">Logs</button>
-</div>
+    <button id="exportLogBtn">Export Log</button>
+    <button id="nextRoundBtn">Next Round</button>
 
-<main class="main-container">
-
-    <!-- PLAY TAB -->
-    <section id="playTab" class="tab-content active">
-
-        <div id="trackGrid" class="track-grid"></div>
-
-        <div class="hand-zone">
-            <div id="hand"></div>
-        </div>
-
-        <div class="commentary-zone">
-            <div id="commentary"></div>
-        </div>
-
-    </section>
-
-    <!-- ANALYSIS TAB -->
-    <section id="analysisTab" class="tab-content">
-        <div class="analysis-container">
-            <h3>System Relationships</h3>
-            <div id="relationshipDiagram">
-                (Interactive diagram coming next phase)
-            </div>
-        </div>
-    </section>
-
-    <!-- LOGS TAB -->
-    <section id="logsTab" class="tab-content">
-        <div class="logs-container">
-            <h3>Run Log</h3>
-            <button id="exportLogBtn">Export JSON</button>
-            <pre id="logPreview"></pre>
-        </div>
-    </section>
-
-</main>
-
-<!-- Reflection Overlay -->
-<div id="overlay" class="overlay hidden">
-    <div class="overlay-box">
-        <div id="overlayText"></div>
-        <button id="overlayClose">Continue</button>
-    </div>
-</div>
-
-<script type="module" src="main.js"></script>
+    <script type="module" src="main.js"></script>
 
 </body>
 </html>
