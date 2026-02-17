@@ -1,5 +1,5 @@
 /* ================================================= */
-/* SYSTEM SHIFT – MAIN (FULL STABLE HALO BUILD)     */
+/* SYSTEM SHIFT – MAIN (FULL STABLE HALO BUILD AAA) */
 /* ================================================= */
 
 import { gameState } from "./game/state.js";
@@ -23,7 +23,7 @@ const momentumStat = document.getElementById("momentumStat");
 const capitalStat = document.getElementById("capitalStat");
 const pressureStat = document.getElementById("pressureStat");
 
-/* Track Halo Containers (must exist in HTML) */
+/* Track Halo Containers */
 const trackElements = {
     wellbeing: document.getElementById("track-wellbeing"),
     planet: document.getElementById("track-planet"),
@@ -32,6 +32,113 @@ const trackElements = {
     wealth: document.getElementById("track-wealth"),
     tension: document.getElementById("track-tension")
 };
+
+let previousTrackValues = {};
+
+/* ================================================= */
+/* AMBIENT PARTICLE ENGINE                          */
+/* ================================================= */
+
+const ambientCanvas = document.getElementById("ambientCanvas");
+const ambientCtx = ambientCanvas?.getContext("2d");
+
+let ambientParticles = [];
+let ambientIntensity = 0.3;
+
+function resizeAmbientCanvas() {
+    if (!ambientCanvas) return;
+    ambientCanvas.width = window.innerWidth;
+    ambientCanvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize", resizeAmbientCanvas);
+resizeAmbientCanvas();
+
+function createAmbientParticles(count) {
+    if (!ambientCanvas) return;
+
+    ambientParticles = [];
+
+    for (let i = 0; i < count; i++) {
+        ambientParticles.push({
+            x: Math.random() * ambientCanvas.width,
+            y: Math.random() * ambientCanvas.height,
+            radius: Math.random() * 2 + 0.5,
+            speed: Math.random() * 0.6 + 0.2,
+            angle: Math.random() * Math.PI * 2
+        });
+    }
+}
+
+function updateAmbientIntensity() {
+    const tension = gameState.tracks.tension;
+
+    if (tension < 6) ambientIntensity = 0.25;
+    else if (tension < 12) ambientIntensity = 0.45;
+    else if (tension < 18) ambientIntensity = 0.7;
+    else ambientIntensity = 1.0;
+}
+
+function animateAmbient() {
+    if (!ambientCtx || !ambientCanvas) return;
+
+    ambientCtx.clearRect(0, 0, ambientCanvas.width, ambientCanvas.height);
+
+    ambientParticles.forEach(p => {
+
+        p.x += Math.cos(p.angle) * p.speed * ambientIntensity;
+        p.y += Math.sin(p.angle) * p.speed * ambientIntensity;
+
+        if (p.x < 0) p.x = ambientCanvas.width;
+        if (p.x > ambientCanvas.width) p.x = 0;
+        if (p.y < 0) p.y = ambientCanvas.height;
+        if (p.y > ambientCanvas.height) p.y = 0;
+
+        const tension = gameState.tracks.tension;
+
+        let color;
+
+        if (tension < 6) color = "rgba(59,130,246,0.35)";
+        else if (tension < 12) color = "rgba(148,163,184,0.35)";
+        else if (tension < 18) color = "rgba(239,68,68,0.45)";
+        else color = "rgba(255,0,0,0.65)";
+
+        ambientCtx.beginPath();
+        ambientCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ambientCtx.fillStyle = color;
+        ambientCtx.fill();
+    });
+
+    requestAnimationFrame(animateAmbient);
+}
+
+createAmbientParticles(70);
+animateAmbient();
+
+/* ================================================= */
+/* ANIMATED VALUE HELPER                            */
+/* ================================================= */
+
+function animateValue(el, newValue) {
+    if (!el) return;
+
+    const old = parseInt(el.textContent) || 0;
+    const diff = newValue - old;
+
+    if (diff === 0) {
+        el.textContent = newValue;
+        return;
+    }
+
+    const steps = 15;
+    let current = 0;
+
+    const interval = setInterval(() => {
+        current++;
+        el.textContent = Math.round(old + (diff * current / steps));
+        if (current >= steps) clearInterval(interval);
+    }, 15);
+}
 
 /* ================================================= */
 /* START GAME                                       */
@@ -53,6 +160,8 @@ function startGame() {
         playerHand: [],
         discardPile: []
     });
+
+    previousTrackValues = { ...gameState.tracks };
 
     if (nextRoundBtn) nextRoundBtn.disabled = false;
 
@@ -118,6 +227,7 @@ function render() {
     updateStats();
     renderTracks();
     renderHand();
+    updateAmbientIntensity();
 }
 
 /* ================================================= */
@@ -126,12 +236,22 @@ function render() {
 
 function updateStats() {
 
-    if (roundStat) roundStat.textContent = gameState.round;
-    if (momentumStat) momentumStat.textContent = gameState.momentum;
-    if (capitalStat) capitalStat.textContent = gameState.politicalCapital;
+    animateValue(roundStat, gameState.round);
+    animateValue(momentumStat, gameState.momentum);
+    animateValue(capitalStat, gameState.politicalCapital);
 
     if (pressureStat) {
-        pressureStat.textContent = gameState.pressure?.value || 0;
+        const pressureValue = gameState.pressure?.value || 0;
+        animateValue(pressureStat, pressureValue);
+    }
+
+    const momentumContainer = momentumStat?.parentElement;
+    if (momentumContainer) {
+        if (gameState.momentum >= 5) {
+            momentumContainer.classList.add("momentum-surge");
+        } else {
+            momentumContainer.classList.remove("momentum-surge");
+        }
     }
 }
 
@@ -146,15 +266,30 @@ function renderTracks() {
         if (!el) return;
 
         const value = gameState.tracks[key];
+        const previous = previousTrackValues[key] ?? value;
 
-        el.querySelector(".halo-value").textContent = value;
+        const valueEl = el.querySelector(".halo-value");
+        animateValue(valueEl, value);
 
-        // Optional: update fill ring
         const ring = el.querySelector(".halo-ring");
         if (ring) {
             const percent = Math.min(100, Math.max(0, value * 5));
             ring.style.setProperty("--fill", `${percent}%`);
         }
+
+        if (value > previous) {
+            el.classList.add("glow-boost");
+            setTimeout(() => {
+                el.classList.remove("glow-boost");
+            }, 600);
+        }
+
+        if (key === "tension") {
+            if (value <= 5) el.classList.add("low-tension");
+            else el.classList.remove("low-tension");
+        }
+
+        previousTrackValues[key] = value;
     });
 }
 
@@ -177,16 +312,6 @@ function renderHand() {
                 <h2>END OF CYCLE</h2>
                 <div class="ending-type">${ending.type}</div>
                 <div class="ending-message">${ending.message}</div>
-
-                <div class="ending-stats">
-                    <div>Wellbeing: ${gameState.tracks.wellbeing}</div>
-                    <div>Planet: ${gameState.tracks.planet}</div>
-                    <div>Community: ${gameState.tracks.community}</div>
-                    <div>Power: ${gameState.tracks.power}</div>
-                    <div>Wealth: ${gameState.tracks.wealth}</div>
-                    <div>Tension: ${gameState.tracks.tension}</div>
-                </div>
-
                 <button id="restartBtn">Restart Cycle</button>
             </div>
         `;
@@ -224,6 +349,9 @@ function renderHand() {
 
         btn.addEventListener("click", () => {
 
+            cardDiv.style.transform = "scale(0.92)";
+            setTimeout(() => cardDiv.style.transform = "", 120);
+
             log("CARD_PLAY_ATTEMPT", {
                 cardId: card.id,
                 capitalBefore: gameState.politicalCapital
@@ -256,37 +384,22 @@ function evaluateEnding() {
     const stress = tension;
 
     if (stress >= 18) {
-        return {
-            type: "SYSTEM COLLAPSE",
-            message: "Escalating tension fractured the transition."
-        };
+        return { type: "SYSTEM COLLAPSE", message: "Escalating tension fractured the transition." };
     }
 
     if (ecoScore >= 18 && stress < 15) {
-        return {
-            type: "ECOLOGICAL TRANSITION",
-            message: "Planetary repair gained structural momentum."
-        };
+        return { type: "ECOLOGICAL TRANSITION", message: "Planetary repair gained structural momentum." };
     }
 
     if (socialScore >= 22 && stress < 15) {
-        return {
-            type: "SOCIAL TRANSFORMATION",
-            message: "Collective welfare reshaped systemic foundations."
-        };
+        return { type: "SOCIAL TRANSFORMATION", message: "Collective welfare reshaped systemic foundations." };
     }
 
     if (stress < 12) {
-        return {
-            type: "MANAGED STABILITY",
-            message: "Reforms slowed collapse without full transformation."
-        };
+        return { type: "MANAGED STABILITY", message: "Reforms slowed collapse without full transformation." };
     }
 
-    return {
-        type: "SYSTEM DRIFT",
-        message: "Partial reform. Power remained intact."
-    };
+    return { type: "SYSTEM DRIFT", message: "Partial reform. Power remained intact." };
 }
 
 /* ================================================= */
