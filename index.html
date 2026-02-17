@@ -9,6 +9,7 @@
 
 <div id="app">
     <canvas id="ambientCanvas"></canvas>
+    <div id="systemWarningOverlay"></div>
     <!-- TOP ROW -->
     <div class="top-bar">
         <div class="halo-stat">
@@ -83,7 +84,12 @@
     </div>
 
 </div>
+<!-- ================= AUDIO LAYERS ================= -->
 
+<audio id="bgCalm" src="./assets/audio/calm.mp3" preload="auto"></audio>
+<audio id="bgTension" src="./assets/audio/tension.mpeg" preload="auto"></audio>
+<audio id="bgCollapse" src="./assets/audio/collapse.mp3" preload="auto"></audio>
+<audio id="sfxLowCapital" src="./assets/audio/lowtension.mp3" preload="auto"></audio>
 <script type="module" src="main.js"></script>
 
 </body>

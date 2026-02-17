@@ -23,7 +23,65 @@ const momentumStat = document.getElementById("momentumStat");
 const capitalStat = document.getElementById("capitalStat");
 const pressureStat = document.getElementById("pressureStat");
 
-/* Track Halo Containers */
+/* Overlay + Audio */
+const warningOverlay = document.getElementById("systemWarningOverlay");
+const bgCalm = document.getElementById("bgCalm");
+const bgTension = document.getElementById("bgTension");
+const bgCollapse = document.getElementById("bgCollapse");
+const sfxLowCapital = document.getElementById("sfxLowCapital");
+
+let currentMood = "calm";
+let audioInitialized = false;
+let lowCapitalTriggered = false;
+
+/* ================================================= */
+/* SAFE AUDIO UNLOCK SYSTEM                         */
+/* ================================================= */
+
+function initAudio() {
+    if (audioInitialized) return;
+
+    [bgCalm, bgTension, bgCollapse].forEach(a => {
+        if (!a) return;
+        a.loop = true;
+        a.volume = 0;
+        a.play().catch(() => {});
+    });
+
+    audioInitialized = true;
+}
+
+function fadeAudio(audio, target, speed = 0.004) {
+    if (!audio) return;
+
+    const interval = setInterval(() => {
+        if (Math.abs(audio.volume - target) < 0.01) {
+            audio.volume = target;
+            clearInterval(interval);
+        } else {
+            audio.volume += audio.volume < target ? speed : -speed;
+        }
+    }, 50); // slower interval for smoother blend
+}
+
+/* Unlock audio only after first user interaction */
+function unlockAudioOnce() {
+    if (audioInitialized) return;
+
+    initAudio();
+    fadeAudio(bgCalm, 0.6, 0.003);
+
+    document.removeEventListener("click", unlockAudioOnce);
+    document.removeEventListener("keydown", unlockAudioOnce);
+}
+
+document.addEventListener("click", unlockAudioOnce);
+document.addEventListener("keydown", unlockAudioOnce);
+
+/* ================================================= */
+/* TRACK HALO CONTAINERS                            */
+/* ================================================= */
+
 const trackElements = {
     wellbeing: document.getElementById("track-wellbeing"),
     planet: document.getElementById("track-planet"),
@@ -97,7 +155,6 @@ function animateAmbient() {
         const tension = gameState.tracks.tension;
 
         let color;
-
         if (tension < 6) color = "rgba(59,130,246,0.35)";
         else if (tension < 12) color = "rgba(148,163,184,0.35)";
         else if (tension < 18) color = "rgba(239,68,68,0.45)";
@@ -141,6 +198,45 @@ function animateValue(el, newValue) {
 }
 
 /* ================================================= */
+/* SOUNDTRACK SYSTEM (SOFT CINEMATIC BLEND)        */
+/* ================================================= */
+
+function updateSoundtrack() {
+
+    if (!audioInitialized) return;
+
+    const tension = gameState.tracks.tension;
+
+    if (tension < 12) {
+
+        fadeAudio(bgCalm, 0.65);
+        fadeAudio(bgTension, 0.0);
+        fadeAudio(bgCollapse, 0.0);
+
+        currentMood = "calm";
+    }
+
+    else if (tension < 18) {
+
+        // Gentle cinematic layering
+        fadeAudio(bgCalm, 0.48);
+        fadeAudio(bgTension, 0.18); // reduced max volume (softer)
+        fadeAudio(bgCollapse, 0.0);
+
+        currentMood = "tension";
+    }
+
+    else {
+
+        fadeAudio(bgCalm, 0.28);
+        fadeAudio(bgTension, 0.30);
+        fadeAudio(bgCollapse, 0.50);
+
+        currentMood = "collapse";
+    }
+}
+
+/* ================================================= */
 /* START GAME                                       */
 /* ================================================= */
 
@@ -162,6 +258,7 @@ function startGame() {
     });
 
     previousTrackValues = { ...gameState.tracks };
+    lowCapitalTriggered = false;
 
     if (nextRoundBtn) nextRoundBtn.disabled = false;
 
@@ -180,7 +277,6 @@ if (exportBtn) exportBtn.addEventListener("click", exportLog);
 /* ================================================= */
 
 function drawHand(count) {
-
     gameState.playerHand = [];
 
     for (let i = 0; i < count; i++) {
@@ -228,6 +324,7 @@ function render() {
     renderTracks();
     renderHand();
     updateAmbientIntensity();
+    updateSoundtrack();
 }
 
 /* ================================================= */
@@ -245,13 +342,20 @@ function updateStats() {
         animateValue(pressureStat, pressureValue);
     }
 
-    const momentumContainer = momentumStat?.parentElement;
-    if (momentumContainer) {
-        if (gameState.momentum >= 5) {
-            momentumContainer.classList.add("momentum-surge");
-        } else {
-            momentumContainer.classList.remove("momentum-surge");
-        }
+    if (gameState.politicalCapital <= 2 && !lowCapitalTriggered) {
+        if (sfxLowCapital) sfxLowCapital.play().catch(() => {});
+        lowCapitalTriggered = true;
+    }
+
+    if (gameState.politicalCapital > 2) {
+        lowCapitalTriggered = false;
+    }
+
+    if (warningOverlay) {
+        if (gameState.tracks.tension >= 18)
+            warningOverlay.classList.add("active");
+        else
+            warningOverlay.classList.remove("active");
     }
 }
 
@@ -279,14 +383,14 @@ function renderTracks() {
 
         if (value > previous) {
             el.classList.add("glow-boost");
-            setTimeout(() => {
-                el.classList.remove("glow-boost");
-            }, 600);
+            setTimeout(() => el.classList.remove("glow-boost"), 600);
         }
 
         if (key === "tension") {
-            if (value <= 5) el.classList.add("low-tension");
-            else el.classList.remove("low-tension");
+            if (value >= 15)
+                el.classList.add("danger-mode");
+            else
+                el.classList.remove("danger-mode");
         }
 
         previousTrackValues[key] = value;
@@ -343,9 +447,8 @@ function renderHand() {
 
         const btn = cardDiv.querySelector(".play-btn");
 
-        if (gameState.politicalCapital < card.cost) {
+        if (gameState.politicalCapital < card.cost)
             btn.disabled = true;
-        }
 
         btn.addEventListener("click", () => {
 
@@ -383,21 +486,17 @@ function evaluateEnding() {
     const ecoScore = planet;
     const stress = tension;
 
-    if (stress >= 18) {
+    if (stress >= 18)
         return { type: "SYSTEM COLLAPSE", message: "Escalating tension fractured the transition." };
-    }
 
-    if (ecoScore >= 18 && stress < 15) {
+    if (ecoScore >= 18 && stress < 15)
         return { type: "ECOLOGICAL TRANSITION", message: "Planetary repair gained structural momentum." };
-    }
 
-    if (socialScore >= 22 && stress < 15) {
+    if (socialScore >= 22 && stress < 15)
         return { type: "SOCIAL TRANSFORMATION", message: "Collective welfare reshaped systemic foundations." };
-    }
 
-    if (stress < 12) {
+    if (stress < 12)
         return { type: "MANAGED STABILITY", message: "Reforms slowed collapse without full transformation." };
-    }
 
     return { type: "SYSTEM DRIFT", message: "Partial reform. Power remained intact." };
 }

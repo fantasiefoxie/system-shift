@@ -353,3 +353,34 @@ button:hover {
     position: relative;
     z-index: 1;
 }
+.danger-mode {
+    animation: dangerPulse 1.2s infinite;
+}
+
+@keyframes dangerPulse {
+    0%   { box-shadow: 0 0 10px #ef4444; }
+    50%  { box-shadow: 0 0 25px #ef4444; }
+    100% { box-shadow: 0 0 10px #ef4444; }
+}
+.low-capital {
+    animation: capitalWarning 1.4s infinite;
+}
+
+@keyframes capitalWarning {
+    0%   { box-shadow: 0 0 6px #f59e0b; }
+    50%  { box-shadow: 0 0 18px #f59e0b; }
+    100% { box-shadow: 0 0 6px #f59e0b; }
+}
+#systemWarningOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 0, 0, 0.06);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+#systemWarningOverlay.active {
+    opacity: 1;
+}
