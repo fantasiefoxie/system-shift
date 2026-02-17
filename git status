@@ -1,0 +1,8 @@
+[33m0fff043[m[33m ([m[1;36mHEAD[m[33m)[m refactor(core): rename tracks + resources to BRICK v2 naming (Leverage, Surge, Pushback, Care, Climate, Solidarity, Authority, Capital, Strain)
+[33m92a3c93[m[33m ([m[1;33mtag: [m[1;33mv0.9-cinematic-audio[m[33m, [m[1;32mresearch-core-stable[m[33m)[m feat(audio): soften tension layer + cinematic blend system
+[33m6bbaa40[m[33m ([m[1;33mtag: [m[1;33mv2.0-aaa-halo[m[33m)[m AAA halo build: animated stats, reactive ambient engine, glow boosts, premium UI stabilization
+[33m054df98[m v0.4 - Halo
+[33m3bcd772[m v0.3 - Engine Stable
+[33m5c6ad24[m[33m ([m[1;33mtag: [m[1;33mresearch-core-v1[m[33m)[m Research Core v1.0 - Seeded RNG, deterministic deck, full logging system integrated
+[33m4a7d87c[m[33m ([m[1;33mtag: [m[1;33mv2-pre-jokers[m[33m, [m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m, [m[1;32mfeature/jokers[m[33m)[m Checkpoint before Joker engine rewrite
+[33m67a8805[m Initial commit
