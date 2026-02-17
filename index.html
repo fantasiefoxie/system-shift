@@ -10,6 +10,7 @@
 <div id="app">
     <canvas id="ambientCanvas"></canvas>
     <div id="systemWarningOverlay"></div>
+
     <!-- TOP ROW -->
     <div class="top-bar">
         <div class="halo-stat">
@@ -18,56 +19,56 @@
         </div>
 
         <div class="halo-stat">
-            <div class="halo-label">Capital</div>
-            <div id="capitalStat" class="halo-value"></div>
+            <div class="halo-label">Leverage</div>
+            <div id="leverageStat" class="halo-value"></div>
         </div>
 
         <div class="halo-stat">
-            <div class="halo-label">Momentum</div>
-            <div id="momentumStat" class="halo-value"></div>
+            <div class="halo-label">Surge</div>
+            <div id="surgeStat" class="halo-value"></div>
         </div>
 
         <div class="halo-stat">
-            <div class="halo-label">Pressure</div>
-            <div id="pressureStat" class="halo-value"></div>
+            <div class="halo-label">Pushback</div>
+            <div id="pushbackStat" class="halo-value"></div>
         </div>
     </div>
 
     <!-- TRACK HALOS -->
     <div class="track-row">
 
-        <div id="track-wellbeing" class="track-halo">
-            <div class="halo-label">Wellbeing</div>
+        <div id="track-care" class="track-halo">
+            <div class="halo-label">Care</div>
             <div class="halo-ring"></div>
             <div class="halo-value"></div>
         </div>
 
-        <div id="track-planet" class="track-halo planet">
-            <div class="halo-label">Planet</div>
+        <div id="track-climate" class="track-halo">
+            <div class="halo-label">Climate</div>
             <div class="halo-ring"></div>
             <div class="halo-value"></div>
         </div>
 
-        <div id="track-community" class="track-halo community">
-            <div class="halo-label">Community</div>
+        <div id="track-solidarity" class="track-halo">
+            <div class="halo-label">Solidarity</div>
             <div class="halo-ring"></div>
             <div class="halo-value"></div>
         </div>
 
-        <div id="track-power" class="track-halo power">
-            <div class="halo-label">Power</div>
+        <div id="track-authority" class="track-halo">
+            <div class="halo-label">Authority</div>
             <div class="halo-ring"></div>
             <div class="halo-value"></div>
         </div>
 
-        <div id="track-wealth" class="track-halo wealth">
-            <div class="halo-label">Wealth</div>
+        <div id="track-capital" class="track-halo">
+            <div class="halo-label">Capital</div>
             <div class="halo-ring"></div>
             <div class="halo-value"></div>
         </div>
 
-        <div id="track-tension" class="track-halo tension">
-            <div class="halo-label">Tension</div>
+        <div id="track-strain" class="track-halo">
+            <div class="halo-label">Strain</div>
             <div class="halo-ring"></div>
             <div class="halo-value"></div>
         </div>
@@ -84,13 +85,15 @@
     </div>
 
 </div>
+
 <!-- ================= AUDIO LAYERS ================= -->
 
 <audio id="bgCalm" src="./assets/audio/calm.mp3" preload="auto"></audio>
 <audio id="bgTension" src="./assets/audio/tension.mpeg" preload="auto"></audio>
 <audio id="bgCollapse" src="./assets/audio/collapse.mp3" preload="auto"></audio>
 <audio id="sfxLowCapital" src="./assets/audio/lowtension.mp3" preload="auto"></audio>
-<script type="module" src="main.js"></script>
+
+<script type="module" src="main.js?v=3"></script>
 
 </body>
 </html>

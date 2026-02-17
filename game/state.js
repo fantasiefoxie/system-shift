@@ -1,5 +1,5 @@
 /* ================================================= */
-/* SYSTEM SHIFT – STATE (Research Core Stable)      */
+/* SYSTEM SHIFT – STATE (BRICK FOUNDATION v2)       */
 /* ================================================= */
 
 export const gameState = {
@@ -15,30 +15,31 @@ export const gameState = {
 
     handSize: 5,
 
-    politicalCapital: 5,
-    maxPoliticalCapital: 8,
-    politicalRecovery: 2,
+    /* LEVERAGE (formerly Political Capital) */
+    leverage: 5,
+    maxLeverage: 8,
+    leverageRecovery: 2,
 
-    /* ENERGY */
-    momentum: 0,
+    /* SURGE (formerly Momentum) */
+    surge: 0,
 
-    /* PRESSURE */
-    pressure: {
+    /* PUSHBACK (formerly Pressure) */
+    pushback: {
         revealed: false,
         value: 0
     },
 
-    structuralPressure: 0,
-    surfacePressure: 0,
+    structuralPushback: 0,
+    surfacePushback: 0,
 
-    /* TRACKS */
+    /* HALOS (formerly tracks) */
     tracks: {
-        wellbeing: 8,
-        planet: 8,
-        community: 6,
-        power: 5,
-        wealth: 15,
-        tension: 6
+        care: 8,
+        climate: 8,
+        solidarity: 6,
+        authority: 5,
+        capital: 15,
+        strain: 6
     },
 
     /* CARDS */

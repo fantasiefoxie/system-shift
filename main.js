@@ -19,20 +19,20 @@ const handDiv = document.getElementById("hand");
 
 /* Halo Stat Elements */
 const roundStat = document.getElementById("roundStat");
-const momentumStat = document.getElementById("momentumStat");
-const capitalStat = document.getElementById("capitalStat");
-const pressureStat = document.getElementById("pressureStat");
+const surgeStat = document.getElementById("surgeStat");
+const leverageStat = document.getElementById("leverageStat");
+const pushbackStat = document.getElementById("pushbackStat");
 
 /* Overlay + Audio */
 const warningOverlay = document.getElementById("systemWarningOverlay");
 const bgCalm = document.getElementById("bgCalm");
 const bgTension = document.getElementById("bgTension");
 const bgCollapse = document.getElementById("bgCollapse");
-const sfxLowCapital = document.getElementById("sfxLowCapital");
+const sfxLowLeverage = document.getElementById("sfxLowCapital");
 
 let currentMood = "calm";
 let audioInitialized = false;
-let lowCapitalTriggered = false;
+let lowLeverageTriggered = false;
 
 /* ================================================= */
 /* SAFE AUDIO UNLOCK SYSTEM                         */
@@ -61,10 +61,9 @@ function fadeAudio(audio, target, speed = 0.004) {
         } else {
             audio.volume += audio.volume < target ? speed : -speed;
         }
-    }, 50); // slower interval for smoother blend
+    }, 50);
 }
 
-/* Unlock audio only after first user interaction */
 function unlockAudioOnce() {
     if (audioInitialized) return;
 
@@ -79,16 +78,16 @@ document.addEventListener("click", unlockAudioOnce);
 document.addEventListener("keydown", unlockAudioOnce);
 
 /* ================================================= */
-/* TRACK HALO CONTAINERS                            */
+/* TRACK HALO CONTAINERS (RENAMED)                  */
 /* ================================================= */
 
 const trackElements = {
-    wellbeing: document.getElementById("track-wellbeing"),
-    planet: document.getElementById("track-planet"),
-    community: document.getElementById("track-community"),
-    power: document.getElementById("track-power"),
-    wealth: document.getElementById("track-wealth"),
-    tension: document.getElementById("track-tension")
+    care: document.getElementById("track-care"),
+    climate: document.getElementById("track-climate"),
+    solidarity: document.getElementById("track-solidarity"),
+    authority: document.getElementById("track-authority"),
+    capital: document.getElementById("track-capital"),
+    strain: document.getElementById("track-strain")
 };
 
 let previousTrackValues = {};
@@ -129,11 +128,11 @@ function createAmbientParticles(count) {
 }
 
 function updateAmbientIntensity() {
-    const tension = gameState.tracks.tension;
+    const strain = gameState.tracks.strain;
 
-    if (tension < 6) ambientIntensity = 0.25;
-    else if (tension < 12) ambientIntensity = 0.45;
-    else if (tension < 18) ambientIntensity = 0.7;
+    if (strain < 6) ambientIntensity = 0.25;
+    else if (strain < 12) ambientIntensity = 0.45;
+    else if (strain < 18) ambientIntensity = 0.7;
     else ambientIntensity = 1.0;
 }
 
@@ -152,12 +151,12 @@ function animateAmbient() {
         if (p.y < 0) p.y = ambientCanvas.height;
         if (p.y > ambientCanvas.height) p.y = 0;
 
-        const tension = gameState.tracks.tension;
+        const strain = gameState.tracks.strain;
 
         let color;
-        if (tension < 6) color = "rgba(59,130,246,0.35)";
-        else if (tension < 12) color = "rgba(148,163,184,0.35)";
-        else if (tension < 18) color = "rgba(239,68,68,0.45)";
+        if (strain < 6) color = "rgba(59,130,246,0.35)";
+        else if (strain < 12) color = "rgba(148,163,184,0.35)";
+        else if (strain < 18) color = "rgba(239,68,68,0.45)";
         else color = "rgba(255,0,0,0.65)";
 
         ambientCtx.beginPath();
@@ -198,16 +197,16 @@ function animateValue(el, newValue) {
 }
 
 /* ================================================= */
-/* SOUNDTRACK SYSTEM (SOFT CINEMATIC BLEND)        */
+/* SOUNDTRACK SYSTEM                                */
 /* ================================================= */
 
 function updateSoundtrack() {
 
     if (!audioInitialized) return;
 
-    const tension = gameState.tracks.tension;
+    const strain = gameState.tracks.strain;
 
-    if (tension < 12) {
+    if (strain < 12) {
 
         fadeAudio(bgCalm, 0.65);
         fadeAudio(bgTension, 0.0);
@@ -216,11 +215,10 @@ function updateSoundtrack() {
         currentMood = "calm";
     }
 
-    else if (tension < 18) {
+    else if (strain < 18) {
 
-        // Gentle cinematic layering
         fadeAudio(bgCalm, 0.48);
-        fadeAudio(bgTension, 0.18); // reduced max volume (softer)
+        fadeAudio(bgTension, 0.18);
         fadeAudio(bgCollapse, 0.0);
 
         currentMood = "tension";
@@ -251,14 +249,14 @@ function startGame() {
         round: 1,
         gameOver: false,
         playsThisRound: 0,
-        politicalCapital: gameState.maxPoliticalCapital,
-        momentum: 0,
+        leverage: gameState.maxLeverage,
+        surge: 0,
         playerHand: [],
         discardPile: []
     });
 
     previousTrackValues = { ...gameState.tracks };
-    lowCapitalTriggered = false;
+    lowLeverageTriggered = false;
 
     if (nextRoundBtn) nextRoundBtn.disabled = false;
 
@@ -334,25 +332,25 @@ function render() {
 function updateStats() {
 
     animateValue(roundStat, gameState.round);
-    animateValue(momentumStat, gameState.momentum);
-    animateValue(capitalStat, gameState.politicalCapital);
+    animateValue(surgeStat, gameState.surge);
+    animateValue(leverageStat, gameState.leverage);
 
-    if (pressureStat) {
-        const pressureValue = gameState.pressure?.value || 0;
-        animateValue(pressureStat, pressureValue);
+    if (pushbackStat) {
+        const pushbackValue = gameState.pushback?.value || 0;
+        animateValue(pushbackStat, pushbackValue);
     }
 
-    if (gameState.politicalCapital <= 2 && !lowCapitalTriggered) {
-        if (sfxLowCapital) sfxLowCapital.play().catch(() => {});
-        lowCapitalTriggered = true;
+    if (gameState.leverage <= 2 && !lowLeverageTriggered) {
+        if (sfxLowLeverage) sfxLowLeverage.play().catch(() => {});
+        lowLeverageTriggered = true;
     }
 
-    if (gameState.politicalCapital > 2) {
-        lowCapitalTriggered = false;
+    if (gameState.leverage > 2) {
+        lowLeverageTriggered = false;
     }
 
     if (warningOverlay) {
-        if (gameState.tracks.tension >= 18)
+        if (gameState.tracks.strain >= 18)
             warningOverlay.classList.add("active");
         else
             warningOverlay.classList.remove("active");
@@ -386,7 +384,7 @@ function renderTracks() {
             setTimeout(() => el.classList.remove("glow-boost"), 600);
         }
 
-        if (key === "tension") {
+        if (key === "strain") {
             if (value >= 15)
                 el.classList.add("danger-mode");
             else
@@ -447,7 +445,7 @@ function renderHand() {
 
         const btn = cardDiv.querySelector(".play-btn");
 
-        if (gameState.politicalCapital < card.cost)
+        if (gameState.leverage < card.cost)
             btn.disabled = true;
 
         btn.addEventListener("click", () => {
@@ -457,14 +455,14 @@ function renderHand() {
 
             log("CARD_PLAY_ATTEMPT", {
                 cardId: card.id,
-                capitalBefore: gameState.politicalCapital
+                leverageBefore: gameState.leverage
             });
 
             playCard(index);
 
             log("CARD_PLAY_RESOLVED", {
                 cardId: card.id,
-                capitalAfter: gameState.politicalCapital
+                leverageAfter: gameState.leverage
             });
 
             render();
@@ -480,14 +478,14 @@ function renderHand() {
 
 function evaluateEnding() {
 
-    const { wellbeing, planet, community, tension } = gameState.tracks;
+    const { care, climate, solidarity, strain } = gameState.tracks;
 
-    const socialScore = wellbeing + community;
-    const ecoScore = planet;
-    const stress = tension;
+    const socialScore = care + solidarity;
+    const ecoScore = climate;
+    const stress = strain;
 
     if (stress >= 18)
-        return { type: "SYSTEM COLLAPSE", message: "Escalating tension fractured the transition." };
+        return { type: "SYSTEM COLLAPSE", message: "Escalating strain fractured the transition." };
 
     if (ecoScore >= 18 && stress < 15)
         return { type: "ECOLOGICAL TRANSITION", message: "Planetary repair gained structural momentum." };
@@ -498,7 +496,7 @@ function evaluateEnding() {
     if (stress < 12)
         return { type: "MANAGED STABILITY", message: "Reforms slowed collapse without full transformation." };
 
-    return { type: "SYSTEM DRIFT", message: "Partial reform. Power remained intact." };
+    return { type: "SYSTEM DRIFT", message: "Partial reform. Authority remained intact." };
 }
 
 /* ================================================= */
@@ -506,3 +504,5 @@ function evaluateEnding() {
 /* ================================================= */
 
 startGame();
+
+window.__GS = gameState;

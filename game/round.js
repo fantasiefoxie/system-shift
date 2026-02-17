@@ -1,5 +1,5 @@
 /* ================================================= */
-/* SYSTEM SHIFT – ROUND ENGINE (STABLE FIXED)       */
+/* SYSTEM SHIFT – ROUND ENGINE (BRICK v2)           */
 /* ================================================= */
 
 import { gameState } from "./state.js";
@@ -20,17 +20,18 @@ export function playCard(index) {
 
     const cost = Number(card.cost) || 0;
 
-    if (gameState.politicalCapital < cost) {
-        log("PLAY_FAILED_NOT_ENOUGH_PC", {
+    /* Leverage check (formerly Political Capital) */
+    if (gameState.leverage < cost) {
+        log("PLAY_FAILED_NOT_ENOUGH_LEVERAGE", {
             required: cost,
-            available: gameState.politicalCapital
+            available: gameState.leverage
         });
         return;
     }
 
-    // Deduct capital safely
-    gameState.politicalCapital =
-        Number(gameState.politicalCapital) - cost;
+    /* Deduct leverage safely */
+    gameState.leverage =
+        Number(gameState.leverage) - cost;
 
     log("CARD_PLAYED", {
         id: card.id,
@@ -39,12 +40,12 @@ export function playCard(index) {
 
     applyEffects(card.effects);
 
-    // Momentum bonus for structural cards
-    if (card.suit === "power" || card.suit === "community") {
-        gameState.momentum += 1;
+    /* Surge bonus for structural cards (formerly Momentum) */
+    if (card.suit === "authority" || card.suit === "solidarity") {
+        gameState.surge += 1;
     }
 
-    // Move to discard
+    /* Move to discard */
     gameState.discardPile.push(card);
     gameState.playerHand.splice(index, 1);
     gameState.playsThisRound += 1;
@@ -60,11 +61,13 @@ function applyEffects(effects) {
 
         const value = Number(effects[key]) || 0;
 
-        if (key === "momentum") {
-            gameState.momentum += value;
+        /* Surge handling */
+        if (key === "surge") {
+            gameState.surge += value;
             continue;
         }
 
+        /* Halo updates */
         if (gameState.tracks[key] !== undefined) {
             gameState.tracks[key] =
                 Number(gameState.tracks[key]) + value;
@@ -84,36 +87,36 @@ export function endRound() {
         round: gameState.round
     });
 
-    // STOP at maxRounds (no Round 11)
+    /* STOP at maxRounds */
     if (gameState.round >= gameState.maxRounds) {
         gameState.gameOver = true;
         log("GAME_OVER", { finalRound: gameState.round });
         return;
     }
 
-    // Increment round
+    /* Increment round */
     gameState.round += 1;
 
-    // Capital recovery
-    const recovery = Number(gameState.politicalRecovery) || 0;
+    /* Leverage recovery (formerly politicalRecovery) */
+    const recovery = Number(gameState.leverageRecovery) || 0;
 
-    gameState.politicalCapital =
+    gameState.leverage =
         Math.min(
-            gameState.maxPoliticalCapital,
-            Number(gameState.politicalCapital) + recovery
+            gameState.maxLeverage,
+            Number(gameState.leverage) + recovery
         );
 
-    // Tension → Pressure
-    if (gameState.tracks.tension >= 10) {
-        gameState.pressure.value += 1;
+    /* Strain → Pushback (formerly tension → pressure) */
+    if (gameState.tracks.strain >= 10) {
+        gameState.pushback.value += 1;
     }
 
-    // Momentum decay
-    if (gameState.momentum > 0) {
-        gameState.momentum -= 1;
+    /* Surge decay */
+    if (gameState.surge > 0) {
+        gameState.surge -= 1;
     }
 
-    // Reset round state
+    /* Reset round state */
     gameState.playsThisRound = 0;
     gameState.playerHand = [];
 }
