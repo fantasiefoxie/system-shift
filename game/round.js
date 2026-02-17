@@ -1,10 +1,14 @@
 /* ================================================= */
-/* SYSTEM SHIFT – ROUND ENGINE (BRICK v4)           */
-/* Structural Strain Imbalance Model Integrated     */
+/* SYSTEM SHIFT – ROUND ENGINE (BRICK v6 FINAL)     */
+/* Structural Strain + Surge + Pushback Integrated  */
+/* Smart Surge Decay Integrated                     */
 /* ================================================= */
 
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
+
+/* Track whether surge increased this round */
+let surgeGainedThisRound = false;
 
 /* ================================================= */
 /* PLAY CARD */
@@ -38,9 +42,10 @@ export function playCard(index) {
 
     applyEffects(card.effects);
 
-    // Surge bonus for structural cards
+    /* Surge bonus for structural cards */
     if (card.suit === "authority" || card.suit === "solidarity") {
         gameState.surge += 1;
+        surgeGainedThisRound = true;
     }
 
     gameState.discardPile.push(card);
@@ -58,11 +63,14 @@ function applyEffects(effects) {
 
         const value = Number(effects[key]) || 0;
 
+        /* Surge handling */
         if (key === "surge") {
             gameState.surge += value;
+            surgeGainedThisRound = true;
             continue;
         }
 
+        /* Halo updates */
         if (gameState.tracks[key] !== undefined) {
             gameState.tracks[key] += value;
         }
@@ -72,53 +80,36 @@ function applyEffects(effects) {
 }
 
 /* ================================================= */
-/* STRUCTURAL STRAIN – IMBALANCE MODEL (v4)         */
+/* STRUCTURAL STRAIN – IMBALANCE MODEL              */
 /* ================================================= */
 
 function applyStructuralStrainDrift() {
 
     const { care, climate, solidarity, authority, capital, strain } = gameState.tracks;
-
-    /* --------------------------------------------- */
-    /* 1. SOCIAL vs CONTROL IMBALANCE               */
-    /* --------------------------------------------- */
+    const surge = gameState.surge;
 
     const social = (care + solidarity) / 2;
     const control = (authority + capital) / 2;
-
     const powerImbalance = Math.abs(control - social);
-
-    /* --------------------------------------------- */
-    /* 2. ECOLOGICAL DEFICIT                        */
-    /* --------------------------------------------- */
 
     const ecoDeficit = Math.max(0, 10 - climate);
 
-    /* --------------------------------------------- */
-    /* 3. CALCULATE STRAIN DELTA                    */
-    /* --------------------------------------------- */
-
     let strainDelta = 0;
 
-    // Imbalance penalty
     if (powerImbalance >= 6) strainDelta += 2;
     else if (powerImbalance >= 3) strainDelta += 1;
 
-    // Ecological penalty
     if (ecoDeficit >= 5) strainDelta += 2;
     else if (ecoDeficit >= 3) strainDelta += 1;
 
-    // Stability reward
     if (powerImbalance <= 2 && ecoDeficit === 0) {
         strainDelta -= 1;
     }
 
-    /* --------------------------------------------- */
-    /* 4. APPLY + CLAMP                             */
-    /* --------------------------------------------- */
+    const surgeStability = Math.floor(surge / 5);
+    strainDelta -= surgeStability;
 
     let newStrain = strain + strainDelta;
-
     newStrain = Math.max(0, Math.min(20, newStrain));
 
     gameState.tracks.strain = newStrain;
@@ -126,13 +117,15 @@ function applyStructuralStrainDrift() {
     log("STRUCTURAL_STRAIN_IMBALANCE", {
         powerImbalance,
         ecoDeficit,
+        surge,
+        surgeStability,
         strainDelta,
         resultingStrain: newStrain
     });
 }
 
 /* ================================================= */
-/* END ROUND */
+/* END ROUND                                        */
 /* ================================================= */
 
 export function endRound() {
@@ -149,24 +142,60 @@ export function endRound() {
 
     gameState.round += 1;
 
-    // Leverage recovery
+    /* --------------------------------------------- */
+    /* 1. LEVERAGE RECOVERY (with Surge Bonus)      */
+    /* --------------------------------------------- */
+
+    const surgeRecoveryBonus =
+        Math.ceil(gameState.surge / 2) +
+        Math.floor(gameState.surge / 6);
+
     gameState.leverage = Math.min(
         gameState.maxLeverage,
-        gameState.leverage + gameState.leverageRecovery
+        gameState.leverage +
+        gameState.leverageRecovery +
+        surgeRecoveryBonus
     );
 
-    // Pushback from strain threshold
+    /* --------------------------------------------- */
+    /* 2. PUSHBACK UPDATE                           */
+    /* --------------------------------------------- */
+
+    let pushbackIncrease = 0;
+
     if (gameState.tracks.strain >= 10) {
-        gameState.pushback.value += 1;
+        pushbackIncrease += 1;
     }
 
-    // ✅ Structural strain imbalance system
+    pushbackIncrease += Math.floor(gameState.surge / 6);
+
+    gameState.pushback.value += pushbackIncrease;
+
+    log("PUSHBACK_UPDATED", {
+        increase: pushbackIncrease,
+        totalPushback: gameState.pushback.value
+    });
+
+    /* --------------------------------------------- */
+    /* 3. STRUCTURAL STRAIN UPDATE                  */
+    /* --------------------------------------------- */
+
     applyStructuralStrainDrift();
 
-    // Surge decay
-    if (gameState.surge > 0) {
+    /* --------------------------------------------- */
+    /* 4. SURGE DECAY (SMART)                       */
+    /* --------------------------------------------- */
+
+    if (!surgeGainedThisRound && gameState.surge > 0) {
         gameState.surge -= 1;
     }
+
+    /* Reset surge tracker */
+    surgeGainedThisRound = false;
+
+    /* --------------------------------------------- */
+    /* 5. RESET ROUND STATE                         */
+    /* --------------------------------------------- */
 
     gameState.playsThisRound = 0;
     gameState.playerHand = [];

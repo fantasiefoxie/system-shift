@@ -17,7 +17,7 @@ export const gameState = {
 
     /* LEVERAGE (formerly Political Capital) */
     leverage: 5,
-    maxLeverage: 8,
+    maxLeverage: 12,
     leverageRecovery: 2,
 
     /* SURGE (formerly Momentum) */

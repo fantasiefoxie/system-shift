@@ -207,29 +207,21 @@ function updateSoundtrack() {
     const strain = gameState.tracks.strain;
 
     if (strain < 12) {
-
         fadeAudio(bgCalm, 0.65);
         fadeAudio(bgTension, 0.0);
         fadeAudio(bgCollapse, 0.0);
-
         currentMood = "calm";
     }
-
     else if (strain < 18) {
-
         fadeAudio(bgCalm, 0.48);
         fadeAudio(bgTension, 0.18);
         fadeAudio(bgCollapse, 0.0);
-
         currentMood = "tension";
     }
-
     else {
-
         fadeAudio(bgCalm, 0.28);
         fadeAudio(bgTension, 0.30);
         fadeAudio(bgCollapse, 0.50);
-
         currentMood = "collapse";
     }
 }
@@ -473,7 +465,7 @@ function renderHand() {
 }
 
 /* ================================================= */
-/* ENDING LOGIC                                     */
+/* ENDING LOGIC – STRONGER COLLAPSE RULE            */
 /* ================================================= */
 
 function evaluateEnding() {
@@ -484,19 +476,38 @@ function evaluateEnding() {
     const ecoScore = climate;
     const stress = strain;
 
-    if (stress >= 18)
-        return { type: "SYSTEM COLLAPSE", message: "Escalating strain fractured the transition." };
+    /* Collapse only if extreme strain AND breakdown */
+    if (
+        stress >= 20 &&
+        (climate <= 5 || care <= 5)
+    )
+        return {
+            type: "SYSTEM COLLAPSE",
+            message: "Systemic strain combined with social or ecological breakdown triggered collapse."
+        };
 
-    if (ecoScore >= 18 && stress < 15)
-        return { type: "ECOLOGICAL TRANSITION", message: "Planetary repair gained structural momentum." };
+    if (ecoScore >= 18 && stress < 18)
+        return {
+            type: "ECOLOGICAL TRANSITION",
+            message: "Planetary repair gained structural momentum."
+        };
 
-    if (socialScore >= 22 && stress < 15)
-        return { type: "SOCIAL TRANSFORMATION", message: "Collective welfare reshaped systemic foundations." };
+    if (socialScore >= 22 && stress < 18)
+        return {
+            type: "SOCIAL TRANSFORMATION",
+            message: "Collective welfare reshaped systemic foundations."
+        };
 
     if (stress < 12)
-        return { type: "MANAGED STABILITY", message: "Reforms slowed collapse without full transformation." };
+        return {
+            type: "MANAGED STABILITY",
+            message: "Reforms slowed collapse without full transformation."
+        };
 
-    return { type: "SYSTEM DRIFT", message: "Partial reform. Authority remained intact." };
+    return {
+        type: "SYSTEM DRIFT",
+        message: "Partial reform. Authority remained intact."
+    };
 }
 
 /* ================================================= */
@@ -504,5 +515,3 @@ function evaluateEnding() {
 /* ================================================= */
 
 startGame();
-
-window.__GS = gameState;
