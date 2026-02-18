@@ -1,87 +1,30 @@
 /* ================================================= */
-/* SYSTEM SHIFT – MAIN (FULL STABLE HALO BUILD AAA) */
+/* SYSTEM SHIFT – MAIN (HALO BUILD AAA – RESTORED)  */
 /* ================================================= */
 
 import { gameState } from "./game/state.js";
 import { baseDeck, shuffleDeck, drawCard } from "./game/deck.js";
-import { playCard, endRound } from "./game/round.js";
-import { initLogger, log, exportLog } from "./game/logger.js";
-import { evaluateOutcome } from "./game/outcomeEngine.js"; // ✅ NEW
+import { endRound } from "./game/round.js";
+import { initLogger, log, exportLog, endRun } from "./game/logger.js";
+import { evaluateOutcome } from "./game/outcomeEngine.js";
 import { resolveCard } from "./game/effectResolver.js";
+import { checkSystemPhases, handleEndingMusic, resetPhaseTracking } from "./game/phaseEngine.js";
+import { setSeed } from "./game/rng.js";
 
 /* ================================================= */
 /* DOM REFERENCES                                   */
 /* ================================================= */
 
-const startBtn = document.getElementById("startBtn");
+const handDiv = document.getElementById("hand");
 const nextRoundBtn = document.getElementById("nextRoundBtn");
 const exportBtn = document.getElementById("exportLogBtn");
 
-const handDiv = document.getElementById("hand");
-
-/* Halo Stat Elements */
 const roundStat = document.getElementById("roundStat");
 const surgeStat = document.getElementById("surgeStat");
 const leverageStat = document.getElementById("leverageStat");
 const pushbackStat = document.getElementById("pushbackStat");
 
-/* Overlay + Audio */
 const warningOverlay = document.getElementById("systemWarningOverlay");
-const bgCalm = document.getElementById("bgCalm");
-const bgTension = document.getElementById("bgTension");
-const bgCollapse = document.getElementById("bgCollapse");
-const sfxLowLeverage = document.getElementById("sfxLowCapital");
-
-let currentMood = "calm";
-let audioInitialized = false;
-let lowLeverageTriggered = false;
-
-/* ================================================= */
-/* SAFE AUDIO UNLOCK SYSTEM                         */
-/* ================================================= */
-
-function initAudio() {
-    if (audioInitialized) return;
-
-    [bgCalm, bgTension, bgCollapse].forEach(a => {
-        if (!a) return;
-        a.loop = true;
-        a.volume = 0;
-        a.play().catch(() => {});
-    });
-
-    audioInitialized = true;
-}
-
-function fadeAudio(audio, target, speed = 0.004) {
-    if (!audio) return;
-
-    const interval = setInterval(() => {
-        if (Math.abs(audio.volume - target) < 0.01) {
-            audio.volume = target;
-            clearInterval(interval);
-        } else {
-            audio.volume += audio.volume < target ? speed : -speed;
-        }
-    }, 50);
-}
-
-function unlockAudioOnce() {
-    if (audioInitialized) return;
-
-    initAudio();
-    fadeAudio(bgCalm, 0.6, 0.003);
-
-    document.removeEventListener("click", unlockAudioOnce);
-    document.removeEventListener("keydown", unlockAudioOnce);
-}
-
-document.addEventListener("click", unlockAudioOnce);
-document.addEventListener("keydown", unlockAudioOnce);
-
-/* ================================================= */
-/* TRACK HALO CONTAINERS (RENAMED)                  */
-/* ================================================= */
 
 const trackElements = {
     care: document.getElementById("track-care"),
@@ -92,141 +35,7 @@ const trackElements = {
     strain: document.getElementById("track-strain")
 };
 
-let previousTrackValues = {};
-
-/* ================================================= */
-/* AMBIENT PARTICLE ENGINE                          */
-/* ================================================= */
-
-const ambientCanvas = document.getElementById("ambientCanvas");
-const ambientCtx = ambientCanvas?.getContext("2d");
-
-let ambientParticles = [];
-let ambientIntensity = 0.3;
-
-function resizeAmbientCanvas() {
-    if (!ambientCanvas) return;
-    ambientCanvas.width = window.innerWidth;
-    ambientCanvas.height = window.innerHeight;
-}
-
-window.addEventListener("resize", resizeAmbientCanvas);
-resizeAmbientCanvas();
-
-function createAmbientParticles(count) {
-    if (!ambientCanvas) return;
-
-    ambientParticles = [];
-
-    for (let i = 0; i < count; i++) {
-        ambientParticles.push({
-            x: Math.random() * ambientCanvas.width,
-            y: Math.random() * ambientCanvas.height,
-            radius: Math.random() * 2 + 0.5,
-            speed: Math.random() * 0.6 + 0.2,
-            angle: Math.random() * Math.PI * 2
-        });
-    }
-}
-
-function updateAmbientIntensity() {
-    const strain = gameState.tracks.strain;
-
-    if (strain < 6) ambientIntensity = 0.25;
-    else if (strain < 12) ambientIntensity = 0.45;
-    else if (strain < 18) ambientIntensity = 0.7;
-    else ambientIntensity = 1.0;
-}
-
-function animateAmbient() {
-    if (!ambientCtx || !ambientCanvas) return;
-
-    ambientCtx.clearRect(0, 0, ambientCanvas.width, ambientCanvas.height);
-
-    ambientParticles.forEach(p => {
-
-        p.x += Math.cos(p.angle) * p.speed * ambientIntensity;
-        p.y += Math.sin(p.angle) * p.speed * ambientIntensity;
-
-        if (p.x < 0) p.x = ambientCanvas.width;
-        if (p.x > ambientCanvas.width) p.x = 0;
-        if (p.y < 0) p.y = ambientCanvas.height;
-        if (p.y > ambientCanvas.height) p.y = 0;
-
-        const strain = gameState.tracks.strain;
-
-        let color;
-        if (strain < 6) color = "rgba(59,130,246,0.35)";
-        else if (strain < 12) color = "rgba(148,163,184,0.35)";
-        else if (strain < 18) color = "rgba(239,68,68,0.45)";
-        else color = "rgba(255,0,0,0.65)";
-
-        ambientCtx.beginPath();
-        ambientCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ambientCtx.fillStyle = color;
-        ambientCtx.fill();
-    });
-
-    requestAnimationFrame(animateAmbient);
-}
-
-createAmbientParticles(70);
-animateAmbient();
-
-/* ================================================= */
-/* ANIMATED VALUE HELPER                            */
-/* ================================================= */
-
-function animateValue(el, newValue) {
-    if (!el) return;
-
-    const old = parseInt(el.textContent) || 0;
-    const diff = newValue - old;
-
-    if (diff === 0) {
-        el.textContent = newValue;
-        return;
-    }
-
-    const steps = 15;
-    let current = 0;
-
-    const interval = setInterval(() => {
-        current++;
-        el.textContent = Math.round(old + (diff * current / steps));
-        if (current >= steps) clearInterval(interval);
-    }, 15);
-}
-
-/* ================================================= */
-/* SOUNDTRACK SYSTEM                                */
-/* ================================================= */
-
-function updateSoundtrack() {
-
-    if (!audioInitialized) return;
-
-    const strain = gameState.tracks.strain;
-
-    if (strain < 12) {
-        fadeAudio(bgCalm, 0.65);
-        fadeAudio(bgTension, 0.0);
-        fadeAudio(bgCollapse, 0.0);
-        currentMood = "calm";
-    }
-    else if (strain < 18) {
-        fadeAudio(bgCalm, 0.48);
-        fadeAudio(bgTension, 0.18);
-        fadeAudio(bgCollapse, 0.0);
-        currentMood = "tension";
-    }
-    else {
-        fadeAudio(bgCalm, 0.28);
-        fadeAudio(bgTension, 0.30);
-        fadeAudio(bgCollapse, 0.50);
-        currentMood = "collapse";
-    }
-}
+let endingMusicPlayed = false;
 
 /* ================================================= */
 /* START GAME                                       */
@@ -234,10 +43,11 @@ function updateSoundtrack() {
 
 function startGame() {
 
-    const seed = Date.now().toString();
+    const seed = Date.now();
 
+    setSeed(seed);
     initLogger(seed);
-    log("GAME_STARTED", { seed });
+    resetPhaseTracking();
 
     Object.assign(gameState, {
         round: 1,
@@ -249,26 +59,23 @@ function startGame() {
         discardPile: []
     });
 
-    previousTrackValues = { ...gameState.tracks };
-    lowLeverageTriggered = false;
-
-    if (nextRoundBtn) nextRoundBtn.disabled = false;
+    endingMusicPlayed = false;
 
     gameState.deck = shuffleDeck([...baseDeck]);
-    log("DECK_INITIALIZED", { size: gameState.deck.length });
-
     drawHand(gameState.handSize);
+
     render();
 }
 
-if (startBtn) startBtn.addEventListener("click", startGame);
 if (exportBtn) exportBtn.addEventListener("click", exportLog);
+if (nextRoundBtn) nextRoundBtn.addEventListener("click", handleEndRound);
 
 /* ================================================= */
 /* DRAW HAND                                        */
 /* ================================================= */
 
 function drawHand(count) {
+
     gameState.playerHand = [];
 
     for (let i = 0; i < count; i++) {
@@ -276,83 +83,78 @@ function drawHand(count) {
         if (!card) break;
         gameState.playerHand.push(card);
     }
-
-    log("HAND_DRAWN", { size: gameState.playerHand.length });
 }
 
 /* ================================================= */
-/* ROUND HANDLER                                    */
+/* ROUND                                            */
 /* ================================================= */
 
 function handleEndRound() {
 
     if (gameState.gameOver) return;
 
-    log("ROUND_END_INITIATED", { round: gameState.round });
-
     endRound();
 
     if (!gameState.gameOver) {
         drawHand(gameState.handSize);
-    } else {
-        if (nextRoundBtn) nextRoundBtn.disabled = true;
     }
 
     render();
 }
-
-if (nextRoundBtn) nextRoundBtn.addEventListener("click", handleEndRound);
-
-document.addEventListener("keydown", (e) => {
-    if (e.key === "r") handleEndRound();
-});
 
 /* ================================================= */
 /* RENDER                                           */
 /* ================================================= */
 
 function render() {
+
     updateStats();
     renderTracks();
     renderHand();
-    updateAmbientIntensity();
-    updateSoundtrack();
+    checkSystemPhases();
+
+    if (gameState.gameOver && !endingMusicPlayed) {
+
+        const ending = evaluateOutcome(gameState);
+
+        handleEndingMusic(ending.type);
+        endRun();
+
+        endingMusicPlayed = true;
+    }
 }
 
 /* ================================================= */
-/* UPDATE HALO STATS                                */
+/* UPDATE TOP BAR                                   */
 /* ================================================= */
 
 function updateStats() {
 
-    animateValue(roundStat, gameState.round);
-    animateValue(surgeStat, gameState.surge);
-    animateValue(leverageStat, gameState.leverage);
+    roundStat.textContent = gameState.round;
+    surgeStat.textContent = gameState.surge;
+    leverageStat.textContent = gameState.leverage;
+    pushbackStat.textContent = gameState.pushback?.value || 0;
 
-    if (pushbackStat) {
-        const pushbackValue = gameState.pushback?.value || 0;
-        animateValue(pushbackStat, pushbackValue);
-    }
+    /* Top bar state classes */
 
-    if (gameState.leverage <= 2 && !lowLeverageTriggered) {
-        if (sfxLowLeverage) sfxLowLeverage.play().catch(() => {});
-        lowLeverageTriggered = true;
-    }
+    leverageStat.parentElement.classList.toggle(
+        "low",
+        gameState.leverage <= 3
+    );
 
-    if (gameState.leverage > 2) {
-        lowLeverageTriggered = false;
-    }
+    pushbackStat.parentElement.classList.toggle(
+        "critical",
+        gameState.pushback?.value >= 15
+    );
 
-    if (warningOverlay) {
-        if (gameState.tracks.strain >= 18)
-            warningOverlay.classList.add("active");
-        else
-            warningOverlay.classList.remove("active");
-    }
+    warningOverlay.classList.toggle(
+        "active",
+        gameState.tracks.strain >= 18
+    );
 }
 
 /* ================================================= */
-/* UPDATE TRACK HALOS                               */
+/* TRACK HALOS                                      */
 /* ================================================= */
 
 function renderTracks() {
@@ -362,35 +164,30 @@ function renderTracks() {
         if (!el) return;
 
         const value = gameState.tracks[key];
-        const previous = previousTrackValues[key] ?? value;
 
         const valueEl = el.querySelector(".halo-value");
-        animateValue(valueEl, value);
-
         const ring = el.querySelector(".halo-ring");
+
+        if (valueEl) valueEl.textContent = value;
+
         if (ring) {
-            const percent = Math.min(100, Math.max(0, value * 5));
-            ring.style.setProperty("--fill", `${percent}%`);
+            const percent = Math.max(0, Math.min(100, value * 5));
+            ring.style.setProperty("--fill", percent + "%");
         }
 
-        if (value > previous) {
-            el.classList.add("glow-boost");
-            setTimeout(() => el.classList.remove("glow-boost"), 600);
-        }
+        /* Threshold state classes */
+
+        el.classList.toggle("high", value >= 15);
+        el.classList.toggle("low", value <= 3);
 
         if (key === "strain") {
-            if (value >= 15)
-                el.classList.add("danger-mode");
-            else
-                el.classList.remove("danger-mode");
+            el.classList.toggle("critical", value >= 18);
         }
-
-        previousTrackValues[key] = value;
     });
 }
 
 /* ================================================= */
-/* HAND / ENDING                                    */
+/* HAND / CARDS                                     */
 /* ================================================= */
 
 function renderHand() {
@@ -401,14 +198,14 @@ function renderHand() {
 
     if (gameState.gameOver) {
 
-        const ending = evaluateEnding();
+        const ending = evaluateOutcome(gameState);
 
         handDiv.innerHTML = `
             <div class="game-over">
                 <h2>END OF CYCLE</h2>
                 <div class="ending-type">${ending.type}</div>
                 <div class="ending-message">${ending.message}</div>
-                <button id="restartBtn">Restart Cycle</button>
+                <button id="restartBtn">Restart</button>
             </div>
         `;
 
@@ -421,19 +218,23 @@ function renderHand() {
     gameState.playerHand.forEach((card, index) => {
 
         const cardDiv = document.createElement("div");
-        cardDiv.classList.add("card");
+
+        /* Add suit class for accent coloring */
+        cardDiv.classList.add("card", `suit-${card.suit}`);
+
+        /* Format effects */
+        const effectsHTML = Object.entries(card.effects || {})
+            .map(([k, v]) => {
+                const sign = v > 0 ? "+" : "";
+                const cls = v >= 0 ? "pos" : "neg";
+                return `<div class="${cls}">${sign}${v} ${capitalize(k)}</div>`;
+            })
+            .join("");
 
         cardDiv.innerHTML = `
             <div class="card-title">${card.title}</div>
             <div class="card-cost">Cost: ${card.cost}</div>
-            <div class="card-effects">
-                ${Object.entries(card.effects)
-                    .map(([k, v]) => {
-                        const cls = v >= 0 ? "pos" : "neg";
-                        return `<div class="${cls}">${k}: ${v}</div>`;
-                    })
-                    .join("")}
-            </div>
+            <div class="card-effects">${effectsHTML}</div>
             <button class="play-btn">Play</button>
         `;
 
@@ -443,29 +244,8 @@ function renderHand() {
             btn.disabled = true;
 
         btn.addEventListener("click", () => {
-
-            // Prevent spam clicking during resolution
             if (btn.disabled) return;
-            btn.disabled = true;
-
-            cardDiv.style.transform = "scale(0.92)";
-            setTimeout(() => cardDiv.style.transform = "", 120);
-
-            log("CARD_PLAY_ATTEMPT", {
-                cardId: card.id,
-                leverageBefore: gameState.leverage
-            });
-
-            // NEW: use resolver instead of direct play
-            resolveCard(index, () => {
-
-                log("CARD_PLAY_RESOLVED", {
-                    cardId: card.id,
-                    leverageAfter: gameState.leverage
-                });
-
-                render();
-            });
+            resolveCard(index, render);
         });
 
         handDiv.appendChild(cardDiv);
@@ -473,11 +253,11 @@ function renderHand() {
 }
 
 /* ================================================= */
-/* ENDING LOGIC – DELEGATED TO OUTCOME ENGINE       */
+/* HELPERS                                          */
 /* ================================================= */
 
-function evaluateEnding() {
-    return evaluateOutcome(gameState);
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /* ================================================= */

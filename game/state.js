@@ -1,38 +1,63 @@
 /* ================================================= */
-/* SYSTEM SHIFT – STATE (BRICK FOUNDATION v2)       */
+/* SYSTEM SHIFT – STATE (BRICK FOUNDATION v3)       */
+/* Fully Compatible with Round v8 + Phase v2        */
 /* ================================================= */
 
 export const gameState = {
 
-    /* CORE */
+    /* ================================================= */
+    /* CORE GAME STATE                                  */
+    /* ================================================= */
+
     round: 1,
     maxRounds: 10,
     gameOver: false,
 
-    /* ACTION ECONOMY */
+    /* ================================================= */
+    /* ACTION ECONOMY                                   */
+    /* ================================================= */
+
     playsThisRound: 0,
     maxPlaysPerRound: 3,
-
     handSize: 5,
 
-    /* LEVERAGE (formerly Political Capital) */
+    /* ================================================= */
+    /* LEVERAGE (Political Capital Layer)               */
+    /* ================================================= */
+
     leverage: 5,
     maxLeverage: 12,
     leverageRecovery: 2,
 
-    /* SURGE (formerly Momentum) */
+    /* ================================================= */
+    /* SURGE (Momentum / Structural Energy)             */
+    /* ================================================= */
+
     surge: 0,
 
-    /* PUSHBACK (formerly Pressure) */
+    /* ================================================= */
+    /* PUSHBACK 2.1 SYSTEM                              */
+    /* ================================================= */
+
     pushback: {
         revealed: false,
+
+        /* Internal Components */
+        eliteResistance: 0,
+        transitionShock: 0,
+
+        /* Derived Value (UI uses this) */
         value: 0
     },
 
+    /* Legacy placeholders (safe to keep) */
     structuralPushback: 0,
     surfacePushback: 0,
 
-    /* HALOS (formerly tracks) */
+    /* ================================================= */
+    /* HALO TRACKS                                      */
+    /* ================================================= */
+
     tracks: {
         care: 8,
         climate: 8,
@@ -42,7 +67,10 @@ export const gameState = {
         strain: 6
     },
 
-    /* CARDS */
+    /* ================================================= */
+    /* CARD SYSTEM                                      */
+    /* ================================================= */
+
     playerHand: [],
     deck: [],
     discardPile: []

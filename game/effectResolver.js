@@ -1,6 +1,7 @@
 /* ================================================= */
-/* SYSTEM SHIFT – EFFECT RESOLVER (BRICK v2 AUDIO)  */
-/* Sequential Card Resolution + Full Sound Hooks    */
+/* SYSTEM SHIFT – EFFECT RESOLVER (v5 FINAL STABLE) */
+/* Sequential Card Resolution + Tension Scaling     */
+/* Fully Hardened + Safe                            */
 /* ================================================= */
 
 import { gameState } from "./state.js";
@@ -26,74 +27,97 @@ export async function resolveCard(index, renderFn) {
     if (resolving) return;
     resolving = true;
 
-    const card = gameState.playerHand[index];
-    if (!card) {
-        resolving = false;
-        return;
-    }
+    try {
 
-    const effects = { ...card.effects };
-    const cost = Number(card.cost) || 0;
+        const card = gameState.playerHand[index];
+        if (!card) return;
 
-    /* --------------------------------------------- */
-    /* 0. Card Interaction Sound                    */
-    /* --------------------------------------------- */
+        const effects = { ...card.effects };
+        const cost = Number(card.cost) || 0;
 
-    playSound("cardFlip");
+        const strain = gameState?.tracks?.strain ?? 0;
+        const pushback = gameState?.pushback?.value ?? 0;
 
-    /* --------------------------------------------- */
-    /* 1. Animate Leverage Cost Deduction           */
-    /* --------------------------------------------- */
+        const dramatic =
+            strain >= 20 ||
+            pushback >= 20;
 
-    for (let i = 0; i < cost; i++) {
-        triggerTopBarAnimation("leverage", false);
-        playSound("tick");
-        await delay(90);
-    }
+        const baseDelay = dramatic ? 190 : 115;
+        const costDelay = dramatic ? 150 : 95;
 
-    /* --------------------------------------------- */
-    /* 2. Execute Actual Game Logic                 */
-    /* --------------------------------------------- */
+        /* --------------------------------------------- */
+        /* 0. Card Interaction                           */
+        /* --------------------------------------------- */
 
-    playCard(index);
-    renderFn();
+        playSound("cardFlip");
+        await delay(70);
 
-    /* --------------------------------------------- */
-    /* 3. Animate Card Effects Sequentially         */
-    /* --------------------------------------------- */
+        /* --------------------------------------------- */
+        /* 1. Animate Leverage Cost Deduction           */
+        /* --------------------------------------------- */
 
-    for (let key in effects) {
+        const leverageBefore = gameState.leverage;
 
-        const value = Number(effects[key]) || 0;
-        const steps = Math.abs(value);
-
-        for (let i = 0; i < steps; i++) {
-
-            triggerStatAnimation(key, value > 0);
-
-            await delay(110);
+        if (leverageBefore < cost) {
+            // fail safe — do not animate cost if invalid
+            return;
         }
+
+        for (let i = 0; i < cost; i++) {
+            triggerTopBarAnimation("leverage", false);
+            await delay(costDelay);
+        }
+
+        /* --------------------------------------------- */
+        /* 2. Execute Real Game Logic                   */
+        /* --------------------------------------------- */
+
+        playCard(index);
+
+        if (typeof renderFn === "function") {
+            renderFn();
+        }
+
+        await delay(70);
+
+        /* --------------------------------------------- */
+        /* 3. Animate Effects Sequentially              */
+        /* --------------------------------------------- */
+
+        for (let key in effects) {
+
+            const value = Number(effects[key]) || 0;
+            const steps = Math.abs(value);
+
+            for (let i = 0; i < steps; i++) {
+                triggerStatAnimation(key, value > 0);
+                await delay(baseDelay);
+            }
+        }
+
+        /* --------------------------------------------- */
+        /* 4. Structural Surge Bonus                    */
+        /* --------------------------------------------- */
+
+        if (card.suit === "authority" || card.suit === "solidarity") {
+            triggerTopBarAnimation("surge", true);
+            await delay(baseDelay + 40);
+        }
+
+        /* --------------------------------------------- */
+        /* 5. Final Resolve Impact                      */
+        /* --------------------------------------------- */
+
+        if (dramatic) {
+            playSound("bassDrop");
+            await delay(220);
+        } else {
+            playSound("energy");
+        }
+
+    } finally {
+        resolving = false;
     }
-
-    /* --------------------------------------------- */
-    /* 4. Surge Bonus (Structural Cards)            */
-    /* --------------------------------------------- */
-
-    if (card.suit === "authority" || card.suit === "solidarity") {
-
-        triggerTopBarAnimation("surge", true);
-        playSound("surgeUp");
-
-        await delay(140);
-    }
-
-    /* --------------------------------------------- */
-    /* 5. Final Resolve Impact                      */
-    /* --------------------------------------------- */
-
-    playSound("energy");
-
-    resolving = false;
 }
 
 /* ================================================= */
@@ -111,8 +135,6 @@ function triggerStatAnimation(stat, positive) {
         el.classList.remove("pulse-up", "pulse-down");
     }, 280);
 
-    /* ---------------- SOUND MAPPING -------------- */
-
     switch (stat) {
 
         case "capital":
@@ -120,7 +142,7 @@ function triggerStatAnimation(stat, positive) {
             break;
 
         case "strain":
-            playSound("heartbeat");
+            playSound("heartbeat", { volume: 0.75 });
             break;
 
         case "care":
@@ -128,6 +150,10 @@ function triggerStatAnimation(stat, positive) {
         case "solidarity":
         case "authority":
             playSound(positive ? "haloUp" : "haloDown");
+            break;
+
+        case "surge":
+            playSound(positive ? "surgeUp" : "surgeBreak");
             break;
 
         default:
@@ -145,8 +171,6 @@ function triggerTopBarAnimation(stat, positive) {
     setTimeout(() => {
         el.classList.remove("pulse-up", "pulse-down");
     }, 280);
-
-    /* ---------------- TOP BAR SOUND -------------- */
 
     if (stat === "leverage") {
         playSound(positive ? "coins" : "tick");

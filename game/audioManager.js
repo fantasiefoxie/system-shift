@@ -1,6 +1,7 @@
 /* ================================================= */
-/* SYSTEM SHIFT – AUDIO MANAGER (v1 STABLE)         */
-/* Centralized Sound Engine                         */
+/* SYSTEM SHIFT – AUDIO MANAGER (v3 FINAL HARDENED) */
+/* Centralized Sound + Music Engine                 */
+/* Crash-Proof + Spam-Safe + Restart-Safe          */
 /* ================================================= */
 
 const AUDIO_PATH = "./assets/audio/";
@@ -39,7 +40,7 @@ const soundMap = {
     surgeUp: "ascend.mp3",
     surgeBreak: "crack.mp3",
 
-    /* Endings */
+    /* Endings / Music */
     ecoEnding: "relaxed-scene.mp3",
     ecoNature: "nature-sound.mp3",
     socialistEnding: "the-international.mp3",
@@ -47,19 +48,21 @@ const soundMap = {
 };
 
 /* ------------------------------------------------- */
-/* INTERNAL STATE                                    */
+/* INTERNAL STATE                                   */
 /* ------------------------------------------------- */
 
 const audioCache = {};
 let masterVolume = 0.6;
+let musicVolume = 0.45;
 let muted = false;
+let currentMusic = null;
 
-/* Prevent rapid spam */
+/* Anti-spam for rapid micro sounds */
 const lastPlayed = {};
-const COOLDOWN_MS = 80;
+const COOLDOWN_MS = 70;
 
 /* ------------------------------------------------- */
-/* LOAD SOUND                                        */
+/* LOAD SOUND (Safe + Cached)                       */
 /* ------------------------------------------------- */
 
 function loadSound(key) {
@@ -69,8 +72,12 @@ function loadSound(key) {
     if (!audioCache[key]) {
 
         const audio = new Audio(AUDIO_PATH + soundMap[key]);
-        audio.volume = masterVolume;
         audio.preload = "auto";
+
+        /* Prevent console crash spam */
+        audio.onerror = () => {
+            console.warn(`[Audio Missing] ${soundMap[key]}`);
+        };
 
         audioCache[key] = audio;
     }
@@ -79,7 +86,7 @@ function loadSound(key) {
 }
 
 /* ------------------------------------------------- */
-/* PLAY SOUND                                        */
+/* PLAY SOUND (Micro FX)                            */
 /* ------------------------------------------------- */
 
 export function playSound(key, options = {}) {
@@ -89,7 +96,6 @@ export function playSound(key, options = {}) {
 
     const now = Date.now();
 
-    /* Simple anti-spam cooldown */
     if (lastPlayed[key] && now - lastPlayed[key] < COOLDOWN_MS) {
         return;
     }
@@ -99,32 +105,86 @@ export function playSound(key, options = {}) {
     const baseAudio = loadSound(key);
     if (!baseAudio) return;
 
-    /* Clone to allow overlapping micro sounds */
-    const audio = baseAudio.cloneNode();
+    try {
 
-    if (options.volume !== undefined) {
-        audio.volume = options.volume;
-    } else {
-        audio.volume = masterVolume;
+        const audio = baseAudio.cloneNode();
+
+        audio.volume = options.volume ?? masterVolume;
+
+        if (options.playbackRate) {
+            audio.playbackRate = options.playbackRate;
+        }
+
+        audio.play().catch(() => {});
+
+    } catch {
+        /* Completely silent fail */
     }
-
-    if (options.playbackRate) {
-        audio.playbackRate = options.playbackRate;
-    }
-
-    audio.play().catch(() => {});
 }
 
 /* ------------------------------------------------- */
-/* CONTROL METHODS                                   */
+/* PLAY MUSIC (Looping Background)                  */
+/* ------------------------------------------------- */
+
+export function playMusic(key, { loop = true, volume } = {}) {
+
+    if (muted) return;
+    if (!soundMap[key]) return;
+
+    stopMusic();
+
+    const baseAudio = loadSound(key);
+    if (!baseAudio) return;
+
+    try {
+
+        currentMusic = baseAudio.cloneNode();
+        currentMusic.loop = loop;
+        currentMusic.volume = volume ?? musicVolume;
+
+        currentMusic.play().catch(() => {});
+
+    } catch {
+        currentMusic = null;
+    }
+}
+
+/* ------------------------------------------------- */
+/* STOP MUSIC                                       */
+/* ------------------------------------------------- */
+
+export function stopMusic() {
+
+    if (!currentMusic) return;
+
+    try {
+        currentMusic.pause();
+        currentMusic.currentTime = 0;
+    } catch {}
+
+    currentMusic = null;
+}
+
+/* ------------------------------------------------- */
+/* CONTROL METHODS                                  */
 /* ------------------------------------------------- */
 
 export function setVolume(value) {
-    masterVolume = Math.max(0, Math.min(1, value));
+    masterVolume = Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+export function setMusicVolume(value) {
+
+    musicVolume = Math.max(0, Math.min(1, Number(value) || 0));
+
+    if (currentMusic) {
+        currentMusic.volume = musicVolume;
+    }
 }
 
 export function muteAll() {
     muted = true;
+    stopMusic();
 }
 
 export function unmuteAll() {

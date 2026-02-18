@@ -1,24 +1,22 @@
 /* ================================================= */
-/* SYSTEM SHIFT – ROUND ENGINE (BRICK v7)           */
-/* Structural Strain + Surge + Pushback 2.0         */
-/* Smart Surge Decay Integrated                     */
+/* SYSTEM SHIFT – ROUND ENGINE (v9 FINAL HARDENED)  */
+/* Structural Strain + Surge + Pushback 2.2         */
+/* Fully Safe + Stable + Deterministic              */
 /* ================================================= */
 
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
 
-/* Track whether surge increased this round */
-let surgeGainedThisRound = false;
+/* Track surge changes within round */
+let surgeDeltaThisRound = 0;
 
 /* ================================================= */
-/* PLAY CARD */
+/* PLAY CARD                                        */
 /* ================================================= */
 
 export function playCard(index) {
 
-    if (gameState.playsThisRound >= gameState.maxPlaysPerRound) {
-        return;
-    }
+    if (gameState.playsThisRound >= gameState.maxPlaysPerRound) return;
 
     const card = gameState.playerHand[index];
     if (!card) return;
@@ -40,12 +38,12 @@ export function playCard(index) {
         cost
     });
 
-    applyEffects(card.effects);
+    applyEffects(card.effects || {});
 
-    /* Surge bonus for structural cards */
+    /* Structural surge bonus */
     if (card.suit === "authority" || card.suit === "solidarity") {
         gameState.surge += 1;
-        surgeGainedThisRound = true;
+        surgeDeltaThisRound += 1;
     }
 
     gameState.discardPile.push(card);
@@ -54,7 +52,7 @@ export function playCard(index) {
 }
 
 /* ================================================= */
-/* APPLY EFFECTS */
+/* APPLY EFFECTS                                    */
 /* ================================================= */
 
 function applyEffects(effects) {
@@ -62,15 +60,14 @@ function applyEffects(effects) {
     for (let key in effects) {
 
         const value = Number(effects[key]) || 0;
+        if (value === 0) continue;
 
-        /* Surge handling */
         if (key === "surge") {
             gameState.surge += value;
-            surgeGainedThisRound = true;
+            surgeDeltaThisRound += value;
             continue;
         }
 
-        /* Halo updates */
         if (gameState.tracks[key] !== undefined) {
             gameState.tracks[key] += value;
         }
@@ -85,8 +82,16 @@ function applyEffects(effects) {
 
 function applyStructuralStrainDrift() {
 
-    const { care, climate, solidarity, authority, capital, strain } = gameState.tracks;
-    const surge = gameState.surge;
+    const t = gameState.tracks;
+
+    const care = Number(t.care) || 0;
+    const climate = Number(t.climate) || 0;
+    const solidarity = Number(t.solidarity) || 0;
+    const authority = Number(t.authority) || 0;
+    const capital = Number(t.capital) || 0;
+    const strain = Number(t.strain) || 0;
+
+    const surge = Number(gameState.surge) || 0;
 
     const social = (care + solidarity) / 2;
     const control = (authority + capital) / 2;
@@ -97,17 +102,21 @@ function applyStructuralStrainDrift() {
 
     let strainDelta = 0;
 
-    if (imbalance > 6) strainDelta += 2;         // control dominant
-    else if (imbalance < -6) strainDelta += 1;   // social dominant
+    /* Power imbalance */
+    if (imbalance > 6) strainDelta += 2;
+    else if (imbalance < -6) strainDelta += 1;
     else if (powerImbalance >= 3) strainDelta += 1;
 
+    /* Ecological stress */
     if (ecoDeficit >= 5) strainDelta += 2;
     else if (ecoDeficit >= 3) strainDelta += 1;
 
+    /* Harmony bonus */
     if (powerImbalance <= 2 && ecoDeficit === 0) {
         strainDelta -= 1;
     }
 
+    /* Surge stabilization */
     const surgeStability = Math.floor(surge / 5);
     strainDelta -= surgeStability;
 
@@ -132,9 +141,7 @@ function applyStructuralStrainDrift() {
 
 export function endRound() {
 
-    log("ROUND_ENDING", {
-        round: gameState.round
-    });
+    log("ROUND_ENDING", { round: gameState.round });
 
     if (gameState.round >= gameState.maxRounds) {
         gameState.gameOver = true;
@@ -145,7 +152,7 @@ export function endRound() {
     gameState.round += 1;
 
     /* --------------------------------------------- */
-    /* 1. LEVERAGE RECOVERY (with Surge Bonus)      */
+    /* 1. LEVERAGE RECOVERY                         */
     /* --------------------------------------------- */
 
     const surgeRecoveryBonus =
@@ -160,13 +167,15 @@ export function endRound() {
     );
 
     /* --------------------------------------------- */
-    /* 2. PUSHBACK 2.0 (Elite + Transition Shock)   */
+    /* 2. PUSHBACK SYSTEM                           */
     /* --------------------------------------------- */
 
-    const { authority, capital, strain } = gameState.tracks;
-    const surge = gameState.surge;
+    const authority = Number(gameState.tracks.authority) || 0;
+    const capital = Number(gameState.tracks.capital) || 0;
+    const strain = Number(gameState.tracks.strain) || 0;
+    const surge = Number(gameState.surge) || 0;
 
-    /* Ensure internal structure exists */
+    gameState.pushback ??= {};
     gameState.pushback.eliteResistance ??= 0;
     gameState.pushback.transitionShock ??= 0;
 
@@ -174,47 +183,29 @@ export function endRound() {
         Math.max(0, authority) +
         Math.max(0, capital);
 
-    /* ---- Elite Resistance ---- */
-
     let eliteResistanceDelta = 0;
 
     if (elitePower > 0) {
 
         eliteResistanceDelta += Math.floor(surge / 4);
 
-        if (strain >= 8 && strain < 18) {
+        if (strain >= 8 && strain < 18)
             eliteResistanceDelta += 1;
-        }
 
-        if (strain >= 20 && eliteResistanceDelta > 0) {
+        if (strain >= 20 && eliteResistanceDelta > 0)
             eliteResistanceDelta -= 1;
-        }
     }
 
-    /* ---- Transition Shock ---- */
+    let transitionShockDelta = Math.floor(surge / 5);
 
-    let transitionShockDelta = 0;
-
-    transitionShockDelta += Math.floor(surge / 5);
-
-    if (strain >= 15) {
+    if (strain >= 15)
         transitionShockDelta += 1;
-    }
-
-    /* Apply deltas */
-
-    gameState.pushback.eliteResistance += eliteResistanceDelta;
-    gameState.pushback.transitionShock += transitionShockDelta;
-
-    /* Clamp to prevent negatives */
 
     gameState.pushback.eliteResistance =
-        Math.max(0, gameState.pushback.eliteResistance);
+        Math.max(0, gameState.pushback.eliteResistance + eliteResistanceDelta);
 
     gameState.pushback.transitionShock =
-        Math.max(0, gameState.pushback.transitionShock);
-
-    /* Derived UI-compatible pushback */
+        Math.max(0, gameState.pushback.transitionShock + transitionShockDelta);
 
     gameState.pushback.value =
         gameState.pushback.eliteResistance +
@@ -227,6 +218,7 @@ export function endRound() {
         transitionShock: gameState.pushback.transitionShock,
         totalPushback: gameState.pushback.value
     });
+
     /* --------------------------------------------- */
     /* 3. PUSHBACK PHASE EFFECTS                    */
     /* --------------------------------------------- */
@@ -243,18 +235,13 @@ export function endRound() {
     }
 
     if (leveragePenalty > 0) {
-        gameState.leverage = Math.max(
-            0,
-            gameState.leverage - leveragePenalty
-        );
+        gameState.leverage =
+            Math.max(0, gameState.leverage - leveragePenalty);
     }
 
-    /* Apply extra structural strain if destabilized */
     if (extraStrainDrift > 0) {
-        gameState.tracks.strain = Math.min(
-            20,
-            gameState.tracks.strain + extraStrainDrift
-        );
+        gameState.tracks.strain =
+            Math.min(20, gameState.tracks.strain + extraStrainDrift);
     }
 
     log("PUSHBACK_PHASE_EFFECT", {
@@ -262,21 +249,22 @@ export function endRound() {
         leveragePenalty,
         extraStrainDrift
     });
+
     /* --------------------------------------------- */
-    /* 4. STRUCTURAL STRAIN UPDATE                  */
+    /* 4. STRUCTURAL STRAIN DRIFT                   */
     /* --------------------------------------------- */
 
     applyStructuralStrainDrift();
 
     /* --------------------------------------------- */
-    /* 5. SURGE DECAY (SMART)                       */
+    /* 5. SURGE DECAY                               */
     /* --------------------------------------------- */
 
-    if (!surgeGainedThisRound && gameState.surge > 0) {
+    if (surgeDeltaThisRound <= 0 && gameState.surge > 0) {
         gameState.surge -= 1;
     }
 
-    surgeGainedThisRound = false;
+    surgeDeltaThisRound = 0;
 
     /* --------------------------------------------- */
     /* 6. RESET ROUND STATE                         */

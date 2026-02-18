@@ -1,5 +1,5 @@
 /* ================================================= */
-/* SYSTEM SHIFT – PREMIUM V2 (HALO BUILD AAA)       */
+/* SYSTEM SHIFT – PREMIUM V3 (HALO BUILD AAA FIXED) */
 /* ================================================= */
 
 * {
@@ -12,11 +12,9 @@
 body {
     background: radial-gradient(circle at top, #1e293b, #0f172a);
     color: #e2e8f0;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
     min-height: 100vh;
 }
 
@@ -30,10 +28,12 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    position: relative;
+    z-index: 1;
 }
 
 /* ================================================= */
-/* TOP BAR HALOS                                    */
+/* TOP BAR                                           */
 /* ================================================= */
 
 .top-bar {
@@ -67,8 +67,21 @@ body {
     transition: 0.3s ease;
 }
 
+/* Top bar warning states */
+.halo-stat.warning .halo-value {
+    text-shadow:
+        0 0 10px #f97316,
+        0 0 25px rgba(249,115,22,0.6);
+}
+
+.halo-stat.critical .halo-value {
+    text-shadow:
+        0 0 12px #ef4444,
+        0 0 35px rgba(239,68,68,0.7);
+}
+
 /* ================================================= */
-/* TRACK HALO ROW                                   */
+/* TRACK HALOS                                      */
 /* ================================================= */
 
 .track-row {
@@ -82,103 +95,67 @@ body {
     height: 92px;
     position: relative;
     border-radius: 50%;
-
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
     background: radial-gradient(circle at 30% 30%, #1e293b, #0f172a);
     border: 1px solid rgba(255,255,255,0.08);
-
     box-shadow:
         inset 0 4px 8px rgba(255,255,255,0.05),
         inset 0 -8px 12px rgba(0,0,0,0.6),
         0 8px 20px rgba(0,0,0,0.8);
-
     animation: haloPulse 4s ease-in-out infinite;
     transition: 0.4s ease;
 }
 
-/* ================================================= */
-/* AAA: Animated Fill Ring                          */
-/* ================================================= */
+/* Proper Accent IDs */
+#track-care       { --accent: #22c55e; }
+#track-climate    { --accent: #10b981; }
+#track-solidarity { --accent: #3b82f6; }
+#track-authority  { --accent: #f59e0b; }
+#track-capital    { --accent: #eab308; }
+#track-strain     { --accent: #ef4444; }
 
+/* Animated Fill Ring */
 .halo-ring {
     position: absolute;
     inset: 0;
     border-radius: 50%;
-
     background: conic-gradient(
-        var(--accent, #3b82f6) var(--fill, 0%),
+        var(--accent) var(--fill, 0%),
         rgba(255,255,255,0.05) var(--fill, 0%)
     );
-
     mask: radial-gradient(circle at center, transparent 58%, black 59%);
     -webkit-mask: radial-gradient(circle at center, transparent 58%, black 59%);
-
     box-shadow:
-        0 0 12px var(--accent),
-        0 0 30px rgba(255,255,255,0.08);
-
-    opacity: 0.9;
-
-    /* Smooth animated fill transition */
-    transition: 
-        background 0.6s ease,
-        box-shadow 0.6s ease;
+        0 0 14px var(--accent),
+        0 0 35px rgba(255,255,255,0.06);
+    transition: background 0.6s ease, box-shadow 0.6s ease;
 }
 
-/* ================================================= */
-/* AAA: Value Increase Glow Pulse                   */
-/* ================================================= */
-
-.track-halo.glow-boost {
+/* Positive High State */
+.track-halo.high {
     box-shadow:
         inset 0 4px 8px rgba(255,255,255,0.05),
         inset 0 -8px 12px rgba(0,0,0,0.6),
-        0 0 25px var(--accent),
-        0 0 50px rgba(255,255,255,0.08);
+        0 0 30px var(--accent),
+        0 0 60px rgba(255,255,255,0.08);
+}
+
+/* Critical Strain */
+#track-strain.critical {
+    --accent: #ff0000;
+    animation: dangerPulse 1s infinite;
+}
+
+/* Low Capital */
+#track-capital.low {
+    --accent: #f97316;
 }
 
 /* ================================================= */
-/* AAA: Low Tension Warning Pulse                   */
-/* ================================================= */
-
-#track-tension.low-tension {
-    animation: tensionPulse 1.2s infinite;
-}
-
-@keyframes tensionPulse {
-    0% { box-shadow: 0 0 0 rgba(239,68,68,0); }
-    50% { box-shadow: 0 0 20px rgba(239,68,68,0.7); }
-    100% { box-shadow: 0 0 0 rgba(239,68,68,0); }
-}
-
-/* ================================================= */
-/* AAA: High Momentum Blue Surge                    */
-/* ================================================= */
-
-.halo-stat.momentum-surge .halo-value {
-    text-shadow:
-        0 0 10px #3b82f6,
-        0 0 20px #3b82f6,
-        0 0 40px rgba(59,130,246,0.6);
-}
-
-/* ================================================= */
-/* Accent Colors                                    */
-/* ================================================= */
-
-#track-wellbeing { --accent: #22c55e; }
-#track-planet    { --accent: #10b981; }
-#track-community { --accent: #3b82f6; }
-#track-power     { --accent: #f59e0b; }
-#track-wealth    { --accent: #eab308; }
-#track-tension   { --accent: #ef4444; }
-
-/* ================================================= */
-/* CARD ROW                                         */
+/* CARD SYSTEM                                      */
 /* ================================================= */
 
 .card-row {
@@ -189,25 +166,22 @@ body {
 
 .card {
     width: 18.8%;
-
     background: linear-gradient(145deg, #1e293b, #0f172a);
     border: 1px solid rgba(255,255,255,0.06);
-
     border-radius: 16px;
     padding: 14px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-
     box-shadow:
         0 10px 30px rgba(0,0,0,0.6),
         inset 0 0 0 1px rgba(255,255,255,0.04);
-
     position: relative;
     overflow: hidden;
     transition: 0.25s ease;
 }
 
+/* Suit Accent Strips */
 .card::before {
     content: "";
     position: absolute;
@@ -215,9 +189,15 @@ body {
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(#3b82f6, #22c55e);
     opacity: 0.9;
 }
+
+.card.care::before        { background: #22c55e; }
+.card.climate::before     { background: #10b981; }
+.card.solidarity::before  { background: #3b82f6; }
+.card.authority::before   { background: #f59e0b; }
+.card.capital::before     { background: #eab308; }
+.card.system::before      { background: #ef4444; }
 
 .card:hover {
     transform: translateY(-6px);
@@ -240,12 +220,18 @@ body {
 }
 
 .card-effects div {
-    font-size: 0.75rem;
-    margin-bottom: 2px;
+    font-size: 0.78rem;
+    margin-bottom: 4px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 .pos { color: #22c55e; }
 .neg { color: #ef4444; }
+
+/* ================================================= */
+/* BUTTONS                                          */
+/* ================================================= */
 
 .play-btn {
     margin-top: 10px;
@@ -306,12 +292,6 @@ button:hover {
     animation: fadeIn 0.6s ease forwards;
 }
 
-.game-over h2 {
-    margin-bottom: 10px;
-    font-weight: 600;
-    letter-spacing: 1px;
-}
-
 .ending-type {
     font-weight: bold;
     margin-bottom: 6px;
@@ -324,7 +304,7 @@ button:hover {
 }
 
 /* ================================================= */
-/* BASE ANIMATIONS                                  */
+/* ANIMATIONS                                       */
 /* ================================================= */
 
 @keyframes haloPulse {
@@ -333,12 +313,19 @@ button:hover {
     100% { transform: scale(1); }
 }
 
+@keyframes dangerPulse {
+    0%   { box-shadow: 0 0 10px #ef4444; }
+    50%  { box-shadow: 0 0 25px #ef4444; }
+    100% { box-shadow: 0 0 10px #ef4444; }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
 /* ================================================= */
-/* AMBIENT BACKGROUND SYSTEM                        */
+/* AMBIENT CANVAS                                   */
 /* ================================================= */
 
 #ambientCanvas {
@@ -349,28 +336,7 @@ button:hover {
     opacity: 0.7;
 }
 
-#app {
-    position: relative;
-    z-index: 1;
-}
-.danger-mode {
-    animation: dangerPulse 1.2s infinite;
-}
-
-@keyframes dangerPulse {
-    0%   { box-shadow: 0 0 10px #ef4444; }
-    50%  { box-shadow: 0 0 25px #ef4444; }
-    100% { box-shadow: 0 0 10px #ef4444; }
-}
-.low-capital {
-    animation: capitalWarning 1.4s infinite;
-}
-
-@keyframes capitalWarning {
-    0%   { box-shadow: 0 0 6px #f59e0b; }
-    50%  { box-shadow: 0 0 18px #f59e0b; }
-    100% { box-shadow: 0 0 6px #f59e0b; }
-}
+/* Overlay */
 #systemWarningOverlay {
     position: fixed;
     inset: 0;
@@ -384,13 +350,10 @@ button:hover {
 #systemWarningOverlay.active {
     opacity: 1;
 }
-.pulse-up {
-    animation: haloPulseUp 0.3s ease;
-}
 
-.pulse-down {
-    animation: haloPulseDown 0.3s ease;
-}
+/* Pulse helpers */
+.pulse-up { animation: haloPulseUp 0.3s ease; }
+.pulse-down { animation: haloPulseDown 0.3s ease; }
 
 @keyframes haloPulseUp {
     0% { transform: scale(1); filter: brightness(1); }
