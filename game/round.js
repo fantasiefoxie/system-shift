@@ -1,6 +1,6 @@
 /* ================================================= */
-/* SYSTEM SHIFT – ROUND ENGINE (BRICK v6 FINAL)     */
-/* Structural Strain + Surge + Pushback Integrated  */
+/* SYSTEM SHIFT – ROUND ENGINE (BRICK v7)           */
+/* Structural Strain + Surge + Pushback 2.0         */
 /* Smart Surge Decay Integrated                     */
 /* ================================================= */
 
@@ -90,13 +90,15 @@ function applyStructuralStrainDrift() {
 
     const social = (care + solidarity) / 2;
     const control = (authority + capital) / 2;
-    const powerImbalance = Math.abs(control - social);
+    const imbalance = control - social;
+    const powerImbalance = Math.abs(imbalance);
 
     const ecoDeficit = Math.max(0, 10 - climate);
 
     let strainDelta = 0;
 
-    if (powerImbalance >= 6) strainDelta += 2;
+    if (imbalance > 6) strainDelta += 2;         // control dominant
+    else if (imbalance < -6) strainDelta += 1;   // social dominant
     else if (powerImbalance >= 3) strainDelta += 1;
 
     if (ecoDeficit >= 5) strainDelta += 2;
@@ -158,43 +160,126 @@ export function endRound() {
     );
 
     /* --------------------------------------------- */
-    /* 2. PUSHBACK UPDATE                           */
+    /* 2. PUSHBACK 2.0 (Elite + Transition Shock)   */
     /* --------------------------------------------- */
 
-    let pushbackIncrease = 0;
+    const { authority, capital, strain } = gameState.tracks;
+    const surge = gameState.surge;
 
-    if (gameState.tracks.strain >= 10) {
-        pushbackIncrease += 1;
+    /* Ensure internal structure exists */
+    gameState.pushback.eliteResistance ??= 0;
+    gameState.pushback.transitionShock ??= 0;
+
+    const elitePower =
+        Math.max(0, authority) +
+        Math.max(0, capital);
+
+    /* ---- Elite Resistance ---- */
+
+    let eliteResistanceDelta = 0;
+
+    if (elitePower > 0) {
+
+        eliteResistanceDelta += Math.floor(surge / 4);
+
+        if (strain >= 8 && strain < 18) {
+            eliteResistanceDelta += 1;
+        }
+
+        if (strain >= 20 && eliteResistanceDelta > 0) {
+            eliteResistanceDelta -= 1;
+        }
     }
 
-    pushbackIncrease += Math.floor(gameState.surge / 6);
+    /* ---- Transition Shock ---- */
 
-    gameState.pushback.value += pushbackIncrease;
+    let transitionShockDelta = 0;
+
+    transitionShockDelta += Math.floor(surge / 5);
+
+    if (strain >= 15) {
+        transitionShockDelta += 1;
+    }
+
+    /* Apply deltas */
+
+    gameState.pushback.eliteResistance += eliteResistanceDelta;
+    gameState.pushback.transitionShock += transitionShockDelta;
+
+    /* Clamp to prevent negatives */
+
+    gameState.pushback.eliteResistance =
+        Math.max(0, gameState.pushback.eliteResistance);
+
+    gameState.pushback.transitionShock =
+        Math.max(0, gameState.pushback.transitionShock);
+
+    /* Derived UI-compatible pushback */
+
+    gameState.pushback.value =
+        gameState.pushback.eliteResistance +
+        gameState.pushback.transitionShock;
 
     log("PUSHBACK_UPDATED", {
-        increase: pushbackIncrease,
+        eliteResistanceDelta,
+        transitionShockDelta,
+        eliteResistance: gameState.pushback.eliteResistance,
+        transitionShock: gameState.pushback.transitionShock,
         totalPushback: gameState.pushback.value
     });
-
     /* --------------------------------------------- */
-    /* 3. STRUCTURAL STRAIN UPDATE                  */
+    /* 3. PUSHBACK PHASE EFFECTS                    */
+    /* --------------------------------------------- */
+
+    let leveragePenalty = 0;
+    let extraStrainDrift = 0;
+
+    if (gameState.pushback.value >= 20) {
+        leveragePenalty = 1;
+        extraStrainDrift = 1;
+    }
+    else if (gameState.pushback.value >= 10) {
+        leveragePenalty = 1;
+    }
+
+    if (leveragePenalty > 0) {
+        gameState.leverage = Math.max(
+            0,
+            gameState.leverage - leveragePenalty
+        );
+    }
+
+    /* Apply extra structural strain if destabilized */
+    if (extraStrainDrift > 0) {
+        gameState.tracks.strain = Math.min(
+            20,
+            gameState.tracks.strain + extraStrainDrift
+        );
+    }
+
+    log("PUSHBACK_PHASE_EFFECT", {
+        pushback: gameState.pushback.value,
+        leveragePenalty,
+        extraStrainDrift
+    });
+    /* --------------------------------------------- */
+    /* 4. STRUCTURAL STRAIN UPDATE                  */
     /* --------------------------------------------- */
 
     applyStructuralStrainDrift();
 
     /* --------------------------------------------- */
-    /* 4. SURGE DECAY (SMART)                       */
+    /* 5. SURGE DECAY (SMART)                       */
     /* --------------------------------------------- */
 
     if (!surgeGainedThisRound && gameState.surge > 0) {
         gameState.surge -= 1;
     }
 
-    /* Reset surge tracker */
     surgeGainedThisRound = false;
 
     /* --------------------------------------------- */
-    /* 5. RESET ROUND STATE                         */
+    /* 6. RESET ROUND STATE                         */
     /* --------------------------------------------- */
 
     gameState.playsThisRound = 0;
