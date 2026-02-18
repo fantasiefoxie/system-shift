@@ -6,6 +6,7 @@ import { gameState } from "./game/state.js";
 import { baseDeck, shuffleDeck, drawCard } from "./game/deck.js";
 import { playCard, endRound } from "./game/round.js";
 import { initLogger, log, exportLog } from "./game/logger.js";
+import { evaluateOutcome } from "./game/outcomeEngine.js"; // ✅ NEW
 
 /* ================================================= */
 /* DOM REFERENCES                                   */
@@ -465,49 +466,11 @@ function renderHand() {
 }
 
 /* ================================================= */
-/* ENDING LOGIC – STRONGER COLLAPSE RULE            */
+/* ENDING LOGIC – DELEGATED TO OUTCOME ENGINE       */
 /* ================================================= */
 
 function evaluateEnding() {
-
-    const { care, climate, solidarity, strain } = gameState.tracks;
-
-    const socialScore = care + solidarity;
-    const ecoScore = climate;
-    const stress = strain;
-
-    /* Collapse only if extreme strain AND breakdown */
-    if (
-        stress >= 20 &&
-        (climate <= 5 || care <= 5)
-    )
-        return {
-            type: "SYSTEM COLLAPSE",
-            message: "Systemic strain combined with social or ecological breakdown triggered collapse."
-        };
-
-    if (ecoScore >= 18 && stress < 18)
-        return {
-            type: "ECOLOGICAL TRANSITION",
-            message: "Planetary repair gained structural momentum."
-        };
-
-    if (socialScore >= 22 && stress < 18)
-        return {
-            type: "SOCIAL TRANSFORMATION",
-            message: "Collective welfare reshaped systemic foundations."
-        };
-
-    if (stress < 12)
-        return {
-            type: "MANAGED STABILITY",
-            message: "Reforms slowed collapse without full transformation."
-        };
-
-    return {
-        type: "SYSTEM DRIFT",
-        message: "Partial reform. Authority remained intact."
-    };
+    return evaluateOutcome(gameState);
 }
 
 /* ================================================= */
