@@ -10,6 +10,7 @@ import { evaluateOutcome } from "./game/outcomeEngine.js";
 import { resolveCard } from "./game/effectResolver.js";
 import { checkSystemPhases, handleEndingMusic, resetPhaseTracking } from "./game/phaseEngine.js";
 import { setSeed } from "./game/rng.js";
+import { initAmbientEngine } from "./game/ambientEngine.js";
 
 /* ================================================= */
 /* DOM REFERENCES                                   */
@@ -263,5 +264,5 @@ function capitalize(str) {
 /* ================================================= */
 /* AUTO START                                       */
 /* ================================================= */
-
+initAmbientEngine();
 startGame();

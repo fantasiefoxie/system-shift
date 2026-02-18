@@ -1,5 +1,5 @@
 /* ================================================= */
-/* SYSTEM SHIFT – PREMIUM V3 (HALO BUILD AAA FIXED) */
+/* SYSTEM SHIFT – PREMIUM V4.1 (SCROLL LOCKED AAA)  */
 /* ================================================= */
 
 * {
@@ -9,13 +9,23 @@
     font-family: system-ui, -apple-system, sans-serif;
 }
 
+/* ================================================= */
+/* VIEWPORT LOCK                                    */
+/* ================================================= */
+
+html, body {
+    height: 100%;
+    overflow: hidden;   /* 🔥 Hard scroll lock */
+}
+
 body {
     background: radial-gradient(circle at top, #1e293b, #0f172a);
     color: #e2e8f0;
+
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
 }
 
 /* ================================================= */
@@ -24,22 +34,26 @@ body {
 
 #app {
     width: 735px;
-    height: 94vh;
+    height: 100vh;           /* 🔥 Full viewport */
+    max-height: 100vh;
+
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+
+    padding: 18px 0;         /* internal spacing instead of margins */
+
     position: relative;
     z-index: 1;
 }
 
 /* ================================================= */
-/* TOP BAR                                           */
+/* TOP BAR                                          */
 /* ================================================= */
 
 .top-bar {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
 }
 
 .halo-stat {
@@ -47,7 +61,11 @@ body {
     flex-direction: column;
     align-items: center;
     font-size: 0.8rem;
-    transition: 0.3s ease;
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.halo-stat:hover {
+    transform: translateY(-2px);
 }
 
 .halo-label {
@@ -67,49 +85,77 @@ body {
     transition: 0.3s ease;
 }
 
-/* Top bar warning states */
-.halo-stat.warning .halo-value {
+/* Low leverage */
+.halo-stat.low .halo-value {
     text-shadow:
-        0 0 10px #f97316,
-        0 0 25px rgba(249,115,22,0.6);
+        0 0 8px #f97316,
+        0 0 18px rgba(249,115,22,0.6);
 }
 
+/* Critical pushback */
 .halo-stat.critical .halo-value {
     text-shadow:
-        0 0 12px #ef4444,
-        0 0 35px rgba(239,68,68,0.7);
+        0 0 10px #ef4444,
+        0 0 28px rgba(239,68,68,0.7);
+    transform: scale(1.05);
+}
+
+/* Surge energy */
+#surgeStat {
+    text-shadow:
+        0 0 6px rgba(59,130,246,0.6),
+        0 0 14px rgba(59,130,246,0.4);
 }
 
 /* ================================================= */
-/* TRACK HALOS                                      */
+/* TRACK HALO ROW                                   */
 /* ================================================= */
 
 .track-row {
     display: flex;
     justify-content: space-between;
-    margin: 20px 0;
+    transition: transform 0.4s ease;
 }
+
+/* ================================================= */
+/* STRAIN CENTER LAYER                              */
+/* ================================================= */
+
+.strain-layer {
+    display: flex;
+    justify-content: center;
+    align-items: center;      /* 🔥 prevents vertical push */
+    position: relative;
+}
+
+/* ================================================= */
+/* TRACK HALO BASE                                  */
+/* ================================================= */
 
 .track-halo {
     width: 92px;
     height: 92px;
     position: relative;
     border-radius: 50%;
+
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+
     background: radial-gradient(circle at 30% 30%, #1e293b, #0f172a);
     border: 1px solid rgba(255,255,255,0.08);
+
     box-shadow:
         inset 0 4px 8px rgba(255,255,255,0.05),
         inset 0 -8px 12px rgba(0,0,0,0.6),
         0 8px 20px rgba(0,0,0,0.8);
+
     animation: haloPulse 4s ease-in-out infinite;
-    transition: 0.4s ease;
+    transition: transform 0.5s ease, box-shadow 0.5s ease, filter 0.5s ease;
 }
 
-/* Proper Accent IDs */
+/* Accent Colors */
 #track-care       { --accent: #22c55e; }
 #track-climate    { --accent: #10b981; }
 #track-solidarity { --accent: #3b82f6; }
@@ -117,24 +163,34 @@ body {
 #track-capital    { --accent: #eab308; }
 #track-strain     { --accent: #ef4444; }
 
-/* Animated Fill Ring */
+/* ================================================= */
+/* HALO RING                                        */
+/* ================================================= */
+
 .halo-ring {
     position: absolute;
     inset: 0;
     border-radius: 50%;
+
     background: conic-gradient(
         var(--accent) var(--fill, 0%),
         rgba(255,255,255,0.05) var(--fill, 0%)
     );
+
     mask: radial-gradient(circle at center, transparent 58%, black 59%);
     -webkit-mask: radial-gradient(circle at center, transparent 58%, black 59%);
+
     box-shadow:
         0 0 14px var(--accent),
         0 0 35px rgba(255,255,255,0.06);
+
     transition: background 0.6s ease, box-shadow 0.6s ease;
 }
 
-/* Positive High State */
+/* ================================================= */
+/* HIGH STATE                                       */
+/* ================================================= */
+
 .track-halo.high {
     box-shadow:
         inset 0 4px 8px rgba(255,255,255,0.05),
@@ -143,15 +199,50 @@ body {
         0 0 60px rgba(255,255,255,0.08);
 }
 
-/* Critical Strain */
-#track-strain.critical {
-    --accent: #ff0000;
-    animation: dangerPulse 1s infinite;
+/* ================================================= */
+/* STRAIN DOMINANCE SYSTEM                          */
+/* ================================================= */
+
+#track-strain {
+    width: 110px;
+    height: 110px;
+    z-index: 3;
 }
 
-/* Low Capital */
-#track-capital.low {
-    --accent: #f97316;
+/* Moderate strain breathing */
+#track-strain.high {
+    animation: strainBreath 2.4s ease-in-out infinite;
+}
+
+@keyframes strainBreath {
+    0%   { transform: scale(1.08); }
+    50%  { transform: scale(1.12); }
+    100% { transform: scale(1.08); }
+}
+
+/* Critical expansion */
+#track-strain.critical {
+    transform: scale(1.25);
+    box-shadow:
+        0 0 45px #ef4444,
+        0 0 90px rgba(239,68,68,0.6),
+        0 0 140px rgba(239,68,68,0.35);
+}
+
+/* Ambient bleed */
+.strain-layer:has(#track-strain.high) ~ .track-row {
+    transform: translateY(6px);
+}
+
+.strain-layer:has(#track-strain.critical) ~ .track-row {
+    transform: translateY(12px);
+}
+
+.strain-layer:has(#track-strain.critical) ~ .track-row .track-halo {
+    box-shadow:
+        inset 0 4px 8px rgba(255,255,255,0.05),
+        inset 0 -8px 12px rgba(0,0,0,0.6),
+        0 0 18px rgba(239,68,68,0.35);
 }
 
 /* ================================================= */
@@ -170,18 +261,21 @@ body {
     border: 1px solid rgba(255,255,255,0.06);
     border-radius: 16px;
     padding: 14px;
+
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+
     box-shadow:
         0 10px 30px rgba(0,0,0,0.6),
         inset 0 0 0 1px rgba(255,255,255,0.04);
+
     position: relative;
     overflow: hidden;
     transition: 0.25s ease;
 }
 
-/* Suit Accent Strips */
+/* Suit accents */
 .card::before {
     content: "";
     position: absolute;
@@ -189,15 +283,14 @@ body {
     left: 0;
     width: 4px;
     height: 100%;
-    opacity: 0.9;
 }
 
-.card.care::before        { background: #22c55e; }
-.card.climate::before     { background: #10b981; }
-.card.solidarity::before  { background: #3b82f6; }
-.card.authority::before   { background: #f59e0b; }
-.card.capital::before     { background: #eab308; }
-.card.system::before      { background: #ef4444; }
+.card.suit-care::before        { background: #22c55e; }
+.card.suit-climate::before     { background: #10b981; }
+.card.suit-solidarity::before  { background: #3b82f6; }
+.card.suit-authority::before   { background: #f59e0b; }
+.card.suit-capital::before     { background: #eab308; }
+.card.suit-system::before      { background: #ef4444; }
 
 .card:hover {
     transform: translateY(-6px);
@@ -206,56 +299,11 @@ body {
         0 0 25px rgba(59,130,246,0.45);
 }
 
-.card-title {
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-    color: #f1f5f9;
-}
-
-.card-cost {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    margin-bottom: 8px;
-}
-
-.card-effects div {
-    font-size: 0.78rem;
-    margin-bottom: 4px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-}
-
+.card-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; }
+.card-cost { font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px; }
+.card-effects div { font-size: 0.78rem; margin-bottom: 4px; font-weight: 500; }
 .pos { color: #22c55e; }
 .neg { color: #ef4444; }
-
-/* ================================================= */
-/* BUTTONS                                          */
-/* ================================================= */
-
-.play-btn {
-    margin-top: 10px;
-    padding: 6px;
-    border-radius: 8px;
-    border: none;
-    background: linear-gradient(90deg, #2563eb, #3b82f6);
-    color: white;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.play-btn:not(:disabled):hover {
-    box-shadow:
-        0 0 15px rgba(59,130,246,0.8),
-        0 0 30px rgba(59,130,246,0.4);
-}
-
-.play-btn:disabled {
-    background: #1e293b;
-    opacity: 0.4;
-    cursor: not-allowed;
-}
 
 /* ================================================= */
 /* CONTROLS                                         */
@@ -264,7 +312,6 @@ body {
 #controls {
     display: flex;
     justify-content: space-between;
-    margin-top: 15px;
 }
 
 button {
@@ -278,65 +325,12 @@ button {
     transition: 0.2s ease;
 }
 
-button:hover {
-    background: #334155;
-}
+button:hover { background: #334155; }
 
 /* ================================================= */
-/* GAME OVER                                        */
+/* OVERLAY                                          */
 /* ================================================= */
 
-.game-over {
-    text-align: center;
-    padding: 25px;
-    animation: fadeIn 0.6s ease forwards;
-}
-
-.ending-type {
-    font-weight: bold;
-    margin-bottom: 6px;
-}
-
-.ending-message {
-    font-size: 0.85rem;
-    opacity: 0.8;
-    margin-bottom: 15px;
-}
-
-/* ================================================= */
-/* ANIMATIONS                                       */
-/* ================================================= */
-
-@keyframes haloPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.04); }
-    100% { transform: scale(1); }
-}
-
-@keyframes dangerPulse {
-    0%   { box-shadow: 0 0 10px #ef4444; }
-    50%  { box-shadow: 0 0 25px #ef4444; }
-    100% { box-shadow: 0 0 10px #ef4444; }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ================================================= */
-/* AMBIENT CANVAS                                   */
-/* ================================================= */
-
-#ambientCanvas {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-/* Overlay */
 #systemWarningOverlay {
     position: fixed;
     inset: 0;
@@ -351,18 +345,24 @@ button:hover {
     opacity: 1;
 }
 
-/* Pulse helpers */
-.pulse-up { animation: haloPulseUp 0.3s ease; }
-.pulse-down { animation: haloPulseDown 0.3s ease; }
+/* ================================================= */
+/* AMBIENT CANVAS                                   */
+/* ================================================= */
 
-@keyframes haloPulseUp {
-    0% { transform: scale(1); filter: brightness(1); }
-    50% { transform: scale(1.15); filter: brightness(1.6); }
-    100% { transform: scale(1); filter: brightness(1); }
+#ambientCanvas {
+    position: fixed;   /* 🔥 prevents layout expansion */
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.7;
 }
 
-@keyframes haloPulseDown {
-    0% { transform: scale(1); filter: brightness(1); }
-    50% { transform: scale(0.9); filter: brightness(0.7); }
-    100% { transform: scale(1); filter: brightness(1); }
+/* ================================================= */
+/* ANIMATIONS                                       */
+/* ================================================= */
+
+@keyframes haloPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
 }
