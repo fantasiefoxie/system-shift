@@ -1,5 +1,5 @@
 /* ================================================= */
-/* SYSTEM SHIFT – MAIN (HALO BUILD AAA – RESTORED)  */
+/* SYSTEM SHIFT – MAIN (HALO BUILD AAA – SEQUENCED) */
 /* ================================================= */
 
 import { gameState } from "./game/state.js";
@@ -37,6 +37,7 @@ const trackElements = {
 };
 
 let endingMusicPlayed = false;
+let previousTrackValues = {}; // 🔥 empty initially
 
 /* ================================================= */
 /* START GAME                                       */
@@ -60,6 +61,7 @@ function startGame() {
         discardPile: []
     });
 
+    previousTrackValues = {}; // 🔥 force first render detection
     endingMusicPlayed = false;
 
     gameState.deck = shuffleDeck([...baseDeck]);
@@ -76,9 +78,7 @@ if (nextRoundBtn) nextRoundBtn.addEventListener("click", handleEndRound);
 /* ================================================= */
 
 function drawHand(count) {
-
     gameState.playerHand = [];
-
     for (let i = 0; i < count; i++) {
         const card = drawCard();
         if (!card) break;
@@ -91,15 +91,9 @@ function drawHand(count) {
 /* ================================================= */
 
 function handleEndRound() {
-
     if (gameState.gameOver) return;
-
     endRound();
-
-    if (!gameState.gameOver) {
-        drawHand(gameState.handSize);
-    }
-
+    if (!gameState.gameOver) drawHand(gameState.handSize);
     render();
 }
 
@@ -108,19 +102,15 @@ function handleEndRound() {
 /* ================================================= */
 
 function render() {
-
     updateStats();
-    renderTracks();
+    renderTracksSequenced();
     renderHand();
     checkSystemPhases();
 
     if (gameState.gameOver && !endingMusicPlayed) {
-
         const ending = evaluateOutcome(gameState);
-
         handleEndingMusic(ending.type);
         endRun();
-
         endingMusicPlayed = true;
     }
 }
@@ -135,8 +125,6 @@ function updateStats() {
     surgeStat.textContent = gameState.surge;
     leverageStat.textContent = gameState.leverage;
     pushbackStat.textContent = gameState.pushback?.value || 0;
-
-    /* Top bar state classes */
 
     leverageStat.parentElement.classList.toggle(
         "low",
@@ -155,36 +143,64 @@ function updateStats() {
 }
 
 /* ================================================= */
-/* TRACK HALOS                                      */
+/* SEQUENCED TRACK UPDATES                          */
 /* ================================================= */
 
-function renderTracks() {
+function renderTracksSequenced() {
+
+    const changedTracks = [];
+    const isFirstRender = Object.keys(previousTrackValues).length === 0;
 
     Object.entries(trackElements).forEach(([key, el]) => {
 
-        if (!el) return;
+        const newValue = gameState.tracks[key];
+        const oldValue = previousTrackValues[key];
 
-        const value = gameState.tracks[key];
-
-        const valueEl = el.querySelector(".halo-value");
-        const ring = el.querySelector(".halo-ring");
-
-        if (valueEl) valueEl.textContent = value;
-
-        if (ring) {
-            const percent = Math.max(0, Math.min(100, value * 5));
-            ring.style.setProperty("--fill", percent + "%");
-        }
-
-        /* Threshold state classes */
-
-        el.classList.toggle("high", value >= 15);
-        el.classList.toggle("low", value <= 3);
-
-        if (key === "strain") {
-            el.classList.toggle("critical", value >= 18);
+        if (isFirstRender || newValue !== oldValue) {
+            changedTracks.push({ key, el, newValue });
         }
     });
+
+    let delay = 0;
+
+    changedTracks.forEach(({ key, el, newValue }) => {
+
+        const isStrain = key === "strain";
+        const localDelay = isFirstRender ? 0 : delay;
+
+        setTimeout(() => {
+
+            const valueEl = el.querySelector(".halo-value");
+            const ring = el.querySelector(".halo-ring");
+
+            if (valueEl) valueEl.textContent = newValue;
+
+            if (ring) {
+                const percent = Math.max(0, Math.min(100, newValue * 5));
+                ring.style.setProperty("--fill", percent + "%");
+            }
+
+            el.classList.toggle("high", newValue >= 15);
+            el.classList.toggle("low", newValue <= 3);
+
+            if (isStrain) {
+                el.classList.toggle("critical", newValue >= 18);
+            }
+
+            if (!isFirstRender) {
+                el.classList.remove("pulse-up");
+                void el.offsetWidth;
+                el.classList.add("pulse-up");
+            }
+
+        }, localDelay);
+
+        if (!isFirstRender) {
+            delay += isStrain ? 320 : 200; // 🔥 slower pop pacing
+        }
+    });
+
+    previousTrackValues = { ...gameState.tracks };
 }
 
 /* ================================================= */
@@ -219,11 +235,8 @@ function renderHand() {
     gameState.playerHand.forEach((card, index) => {
 
         const cardDiv = document.createElement("div");
-
-        /* Add suit class for accent coloring */
         cardDiv.classList.add("card", `suit-${card.suit}`);
 
-        /* Format effects */
         const effectsHTML = Object.entries(card.effects || {})
             .map(([k, v]) => {
                 const sign = v > 0 ? "+" : "";
@@ -264,5 +277,6 @@ function capitalize(str) {
 /* ================================================= */
 /* AUTO START                                       */
 /* ================================================= */
+
 initAmbientEngine();
 startGame();
