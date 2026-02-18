@@ -7,6 +7,7 @@ import { baseDeck, shuffleDeck, drawCard } from "./game/deck.js";
 import { playCard, endRound } from "./game/round.js";
 import { initLogger, log, exportLog } from "./game/logger.js";
 import { evaluateOutcome } from "./game/outcomeEngine.js"; // ✅ NEW
+import { resolveCard } from "./game/effectResolver.js";
 
 /* ================================================= */
 /* DOM REFERENCES                                   */
@@ -443,6 +444,10 @@ function renderHand() {
 
         btn.addEventListener("click", () => {
 
+            // Prevent spam clicking during resolution
+            if (btn.disabled) return;
+            btn.disabled = true;
+
             cardDiv.style.transform = "scale(0.92)";
             setTimeout(() => cardDiv.style.transform = "", 120);
 
@@ -451,14 +456,16 @@ function renderHand() {
                 leverageBefore: gameState.leverage
             });
 
-            playCard(index);
+            // NEW: use resolver instead of direct play
+            resolveCard(index, () => {
 
-            log("CARD_PLAY_RESOLVED", {
-                cardId: card.id,
-                leverageAfter: gameState.leverage
+                log("CARD_PLAY_RESOLVED", {
+                    cardId: card.id,
+                    leverageAfter: gameState.leverage
+                });
+
+                render();
             });
-
-            render();
         });
 
         handDiv.appendChild(cardDiv);

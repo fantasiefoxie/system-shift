@@ -384,3 +384,22 @@ button:hover {
 #systemWarningOverlay.active {
     opacity: 1;
 }
+.pulse-up {
+    animation: haloPulseUp 0.3s ease;
+}
+
+.pulse-down {
+    animation: haloPulseDown 0.3s ease;
+}
+
+@keyframes haloPulseUp {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.15); filter: brightness(1.6); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes haloPulseDown {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(0.9); filter: brightness(0.7); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
