@@ -13,7 +13,7 @@ const AUDIO_PATH = "./assets/audio/";
 const soundMap = {
 
     /* Micro */
-    tick: "tick.mp3",
+    tick: "tick-deepfrozenapps-397275646-2.mp3",
     haloUp: "ui-click-one.mp3",
     haloDown: "error-glitch.mp3",
 
@@ -34,7 +34,7 @@ const soundMap = {
     cardFlip: "card-flip.mp3",
     cardStamp: "stamp.mp3",
     button: "button-click.mp3",
-    shuffle: "card-switch.mp3",
+    shuffle: "card-swap.mp3",
 
     /* Surge */
     surgeUp: "ascend.mp3",
@@ -44,7 +44,7 @@ const soundMap = {
     ecoEnding: "relaxed-scene.mp3",
     ecoNature: "nature-sound.mp3",
     socialistEnding: "the-international.mp3",
-    revolutionaryEnding: "heavily-distorted-bellaciao.mp3"
+    revolutionaryEnding: "bella-ciao.mp3"
 };
 
 /* ------------------------------------------------- */
