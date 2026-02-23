@@ -26,7 +26,7 @@ export const gameState = {
     /* ================================================= */
 
     leverage: 5,
-    maxLeverage: 12,
+    maxLeverage: 10,
     leverageRecovery: 2,
 
     /* ================================================= */
@@ -62,9 +62,9 @@ export const gameState = {
         care: 8,
         climate: 8,
         solidarity: 6,
-        authority: 5,
-        capital: 15,
-        strain: 6
+        authority: 10,
+        capital: 20,
+        strain: 10
     },
 
     /* ================================================= */

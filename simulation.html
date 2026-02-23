@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Balance Simulation Runner</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
+        pre { background: #000; padding: 15px; border: 1px solid #0f0; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        #output { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>System Shift - Balance Simulator</h1>
+    <button id="runBtn">Run 500 Game Simulation</button>
+    <button id="downloadBtn" style="display:none;">Download Results JSON</button>
+    <pre id="output">Click button to start simulation...</pre>
+
+    <script type="module">
+        import { runBalanceSimulation } from "./game/balanceSimulator.js";
+
+        const output = document.getElementById("output");
+        const runBtn = document.getElementById("runBtn");
+        const downloadBtn = document.getElementById("downloadBtn");
+        let resultsData = null;
+
+        runBtn.addEventListener("click", async () => {
+            runBtn.disabled = true;
+            output.textContent = "Running simulation... (this may take a moment)\n";
+
+            setTimeout(() => {
+                const results = runBalanceSimulation(500);
+                resultsData = results;
+
+                let text = "=".repeat(60) + "\n";
+                text += "BALANCE SIMULATION RESULTS (500 games)\n";
+                text += "=".repeat(60) + "\n\n";
+
+                text += "📊 OUTCOME DISTRIBUTION:\n";
+                Object.entries(results.outcomeDistribution)
+                    .sort((a, b) => b[1] - a[1])
+                    .forEach(([outcome, count]) => {
+                        const pct = ((count / results.totalGames) * 100).toFixed(1);
+                        text += `  ${outcome.padEnd(35)} ${count.toString().padStart(4)} (${pct}%)\n`;
+                    });
+
+                text += "\n📈 AVERAGE FINAL TRACKS:\n";
+                Object.entries(results.averageFinalTracks).forEach(([track, value]) => {
+                    text += `  ${track.padEnd(15)} ${value}\n`;
+                });
+
+                text += "\n🃏 MOST PLAYED CARDS:\n";
+                results.mostPlayedCards.forEach(([cardId, count], i) => {
+                    text += `  ${(i + 1).toString().padStart(2)}. Card ${cardId.toString().padStart(3)} - ${count} plays\n`;
+                });
+
+                text += "\n🎴 SUIT DISTRIBUTION:\n";
+                Object.entries(results.suitDistribution)
+                    .sort((a, b) => b[1] - a[1])
+                    .forEach(([suit, count]) => {
+                        text += `  ${suit.padEnd(15)} ${count}\n`;
+                    });
+
+                text += "\n" + "=".repeat(60);
+
+                output.textContent = text;
+                downloadBtn.style.display = "inline-block";
+                runBtn.disabled = false;
+            }, 100);
+        });
+
+        downloadBtn.addEventListener("click", () => {
+            const blob = new Blob([JSON.stringify(resultsData, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "simulation-results.json";
+            a.click();
+        });
+    </script>
+</body>
+</html>

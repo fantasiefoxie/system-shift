@@ -70,6 +70,9 @@ function applyEffects(effects) {
 
         if (gameState.tracks[key] !== undefined) {
             gameState.tracks[key] += value;
+            if (key === "authority" || key === "capital") {
+                gameState.tracks[key] = Math.max(0, gameState.tracks[key]);
+            }
         }
     }
 
@@ -113,7 +116,7 @@ function applyStructuralStrainDrift() {
 
     /* Harmony bonus */
     if (powerImbalance <= 2 && ecoDeficit === 0) {
-        strainDelta -= 1;
+        strainDelta -= 2;
     }
 
     /* Surge stabilization */

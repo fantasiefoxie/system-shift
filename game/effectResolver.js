@@ -112,7 +112,7 @@ export async function resolveCard(index, renderFn) {
             playSound("bassDrop");
             await delay(220);
         } else {
-            playSound("energy");
+            playSound("tick");
         }
 
     } finally {
