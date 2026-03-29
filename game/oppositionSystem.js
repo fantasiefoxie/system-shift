@@ -320,7 +320,7 @@ function applyOppositionResponse(responseType, faction) {
 
     switch (responseType) {
         case "capital_boost":
-            gameState.tracks.capital += 3;
+            gameState.tracks.capital = Math.min(20, gameState.tracks.capital + 3); // Balance: clamp to max 20
             impact = 2.0;
             break;
         
@@ -335,17 +335,12 @@ function applyOppositionResponse(responseType, faction) {
             break;
         
         case "authority_boost":
-            gameState.tracks.authority += 3;
+            gameState.tracks.authority = Math.min(20, gameState.tracks.authority + 3); // Balance: clamp to max 20
             impact = 2.0;
             break;
         
-        case "momentum_drain":
-            gameState.resources.momentum = Math.max(0, gameState.resources.momentum - 3);
-            impact = 1.5;
-            break;
-        
         case "strain_increase":
-            gameState.tracks.strain += 2;
+            gameState.tracks.strain = Math.min(20, gameState.tracks.strain + 2); // Balance: clamp to max 20
             impact = 1.8;
             break;
         

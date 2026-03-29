@@ -140,9 +140,8 @@ function applyEffects(effects) {
 
         if (gameState.tracks[key] !== undefined) {
             gameState.tracks[key] += value;
-            if (key === "authority" || key === "capital") {
-                gameState.tracks[key] = Math.max(0, gameState.tracks[key]);
-            }
+            // Balance: Clamp all tracks to [0, 20] to prevent overflow
+            gameState.tracks[key] = Math.max(0, Math.min(20, gameState.tracks[key]));
         }
     }
 
@@ -383,7 +382,7 @@ export function endRound() {
 
     // When capital > 14, it gains +1/round automatically
     if (gameState.tracks.capital > 14) {
-        gameState.tracks.capital += 1;
+        gameState.tracks.capital = Math.min(20, gameState.tracks.capital + 1); // Balance: clamp to max 20
         log("CAPITAL_SNOWBALL", { capital: gameState.tracks.capital });
     }
 

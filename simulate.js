@@ -162,7 +162,8 @@ function simulateGame(gameSeed) {
                 if (k === "surge") { state.surge += card.effects[k]; surgeDelta += card.effects[k]; }
                 else if (state.tracks[k] !== undefined) {
                     state.tracks[k] += card.effects[k];
-                    if (k === "authority" || k === "capital") state.tracks[k] = Math.max(0, state.tracks[k]);
+                    // Balance: Clamp all tracks to [0, 20]
+                    state.tracks[k] = Math.max(0, Math.min(20, state.tracks[k]));
                 }
             }
             
@@ -322,18 +323,22 @@ function simulateGame(gameSeed) {
     const powerGap = socialPower - elitePower;
     
     let outcome;
-    // Check most restrictive conditions first
-    if (t.strain >= 12 && powerGap <= 5) outcome = "SYSTEM COLLAPSE";
-    else if (t.strain >= 8 && t.authority >= 10 && t.capital >= 16) outcome = "AUTHORITARIAN CONSOLIDATION";
+    // Balance: Check most restrictive conditions first
+    // SYSTEM COLLAPSE: loosened from strain>=12 to strain>=10
+    if (t.strain >= 10 && powerGap <= 5) outcome = "SYSTEM COLLAPSE";
+    // AUTHORITARIAN CONSOLIDATION: tightened powerGap<=14 to <=12
+    else if (t.strain >= 10 && t.authority >= 8 && t.capital >= 14 && powerGap <= 12) outcome = "AUTHORITARIAN CONSOLIDATION";
     else if (t.climate <= 8 && socialPower < 25 && t.strain >= 4) outcome = "ECOLOGICAL CONSTRAINT";
-    else if (t.strain < 14 && Math.abs(powerGap) <= 14 && t.care >= 10 && t.climate >= 10) outcome = "MANAGED STABILITY";
-    // Check positive endings BEFORE TURBULENT TRANSFORMATION
-    else if (t.climate >= 18 && powerGap > 5 && t.strain < 14) outcome = "ECOLOGICAL TRANSITION";
+    // MANAGED STABILITY: tightened from strain<14 to <12
+    else if (t.strain < 12 && Math.abs(powerGap) <= 12 && t.care >= 10 && t.climate >= 10) outcome = "MANAGED STABILITY";
+    // ECOLOGICAL TRANSITION: tightened from climate>=18 to >=19
+    else if (t.climate >= 19 && powerGap > 5 && t.strain < 14) outcome = "ECOLOGICAL TRANSITION";
+    // SOCIAL TRANSFORMATION: kept at socialPower>=24
     else if (socialPower >= 24 && powerGap > 3 && t.strain < 16) outcome = "SOCIAL TRANSFORMATION";
-    // Part 10: Dual power threshold ending
-    else if (state.activeThresholds.includes("dual_power")) outcome = "DUAL POWER TRANSITION";
-    // TURBULENT TRANSFORMATION catches remaining high-strain games - tightened
-    else if (t.strain >= 18 && powerGap > 5 && socialPower >= 28) outcome = "TURBULENT TRANSFORMATION";
+    // DUAL POWER: loosened solidarity>=18 to >=16, authority<=5 to <=6
+    else if (state.activeThresholds.includes("dual_power") || (t.solidarity >= 16 && t.authority <= 6)) outcome = "DUAL POWER TRANSITION";
+    // TURBULENT TRANSFORMATION: tightened from socialPower>=30 to >=32, added strain>=18
+    else if (t.strain >= 18 && powerGap > 5 && socialPower >= 32) outcome = "TURBULENT TRANSFORMATION";
     else outcome = "SYSTEM DRIFT";
     
     return { outcome, tracks: t, pushback: state.pushback.value, surge: state.surge, cardLog };

@@ -113,7 +113,7 @@ function applyThresholdEffect(threshold) {
             gameState.surge += threshold.value;
             break;
         case "strain_spike":
-            gameState.tracks.strain += threshold.value;
+            gameState.tracks.strain = Math.min(20, gameState.tracks.strain + threshold.value); // Balance: clamp to max 20
             break;
         case "elite_desperation":
             // Elite desperation increases opposition intensity
