@@ -102,6 +102,14 @@ export const baseDeck = [
 { id: 703, suit: "hidden", title: "Covert Operation", effects: {}, cost: 0, tags: ["hidden"], hidden: true, revealCost: 1 },
 { id: 704, suit: "hidden", title: "Wildcard", effects: {}, cost: 0, tags: ["hidden"], hidden: true, revealCost: 3 },
 
+/* ================= SCOUTING CARDS (5) ================= */
+
+{ id: 705, suit: "system", title: "Investigative Journalism", effects: { authority: -1 }, cost: 2, tags: ["reform", "institutional"], onPlay: { reveal: "next_3_cards" } },
+{ id: 706, suit: "system", title: "Intelligence Network", effects: { solidarity: 1 }, cost: 2, tags: ["grassroots", "organizing"], onPlay: { reveal: "hidden_tracks" } },
+{ id: 707, suit: "system", title: "Polling Data", effects: {}, cost: 1, tags: ["reform"], onPlay: { reveal: "next_elite_action" } },
+{ id: 708, suit: "system", title: "Wildcat Strike", effects: { solidarity: "2-5" }, cost: 2, tags: ["radical", "labor"] },
+{ id: 709, suit: "system", title: "Spontaneous Protest", effects: { solidarity: "1-4", strain: "1-3" }, cost: 1, tags: ["grassroots"] },
+
 /* ================= DECK EVOLUTION (10) ================= */
 
 { id: 801, suit: "system", title: "Nationalize Industry", effects: { capital: -5, authority: 3, strain: 4 }, cost: 4, tags: ["radical", "economic", "disruptive"], onPlay: { removeTag: "capital", addCard: 802 } },

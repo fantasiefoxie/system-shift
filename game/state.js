@@ -132,5 +132,32 @@ export const gameState = {
         leverageOffset: 0,        // +2 Easy, 0 Normal, -1 Hard
         strainMultiplier: 1.0,    // 0.6 Easy, 1.0 Normal, 1.2 Hard
         oppositionIntensity: 1.0  // 0.7 Easy, 1.0 Normal, 1.3 Hard
+    },
+
+    /* ================================================= */
+    /* HIDDEN TRACKS (PART 8)                           */
+    /* ================================================= */
+
+    hiddenTracks: {
+        eliteCohesion: 10,
+        movementMorale: 10,
+        internationalPressure: 5
+    },
+
+    revealed: {
+        hiddenTracks: false,
+        nextCards: [],
+        nextEliteAction: null
+    },
+
+    /* ================================================= */
+    /* MEMORY SYSTEM (PART 9)                           */
+    /* ================================================= */
+
+    memory: {
+        maxCare: 8,
+        maxClimate: 8,
+        cardsPlayed: [],
+        eventsChosen: []
     }
 };

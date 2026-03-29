@@ -27,6 +27,8 @@ import {
 } from "./oppositionActions.js";
 import { getCurrentAct } from "./acts.js";
 import { addCardToDeck, removeCardFromDeck, removeCardsByTag } from "./deck.js";
+import { updateHiddenTracks } from "./hiddenTracks.js";
+import { checkMemory } from "./memory.js";
 
 /* Track surge changes within round */
 let surgeDeltaThisRound = 0;
@@ -98,6 +100,11 @@ export function playCard(index) {
         gameState.surge += 1;
         surgeDeltaThisRound += 1;
     }
+
+    // Track card in memory (Part 9)
+    gameState.memory.cardsPlayed.push(card);
+    gameState.memory.maxCare = Math.max(gameState.memory.maxCare, gameState.tracks.care);
+    gameState.memory.maxClimate = Math.max(gameState.memory.maxClimate, gameState.tracks.climate);
 
     gameState.discardPile.push(card);
     gameState.playerHand.splice(index, 1);
@@ -392,6 +399,22 @@ export function endRound() {
     
     // Process any delayed effects
     processDelayedEffects();
+
+    /* --------------------------------------------- */
+    /* 6b. HIDDEN TRACKS UPDATE (Part 8)            */
+    /* --------------------------------------------- */
+    
+    updateHiddenTracks();
+
+    /* --------------------------------------------- */
+    /* 6c. MEMORY CHECK (Part 9)                    */
+    /* --------------------------------------------- */
+    
+    const memoryResult = checkMemory();
+    if (memoryResult) {
+        applyEffects(memoryResult.effect);
+        log("MEMORY_TRIGGERED", memoryResult);
+    }
 
     /* --------------------------------------------- */
     /* 7. RESET ROUND STATE                         */
