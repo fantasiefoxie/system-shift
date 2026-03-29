@@ -635,6 +635,127 @@ body {
 }
 
 /* ================================================= */
+/* CARD LIBRARY                                     */
+/* ================================================= */
+
+.library-modal-content {
+    max-width: 800px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.library-content {
+    overflow-y: auto;
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.library-section {
+    margin-bottom: 8px;
+}
+
+.library-section-title {
+    color: #60a5fa;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+    padding-bottom: 8px;
+}
+
+.library-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.library-card {
+    width: 160px;
+    min-height: 200px;
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: 0.25s ease;
+}
+
+.library-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+}
+
+.library-card.suit-care::before        { background: #22c55e; }
+.library-card.suit-climate::before     { background: #10b981; }
+.library-card.suit-solidarity::before  { background: #3b82f6; }
+.library-card.suit-authority::before   { background: #f59e0b; }
+.library-card.suit-capital::before     { background: #eab308; }
+.library-card.suit-system::before      { background: #ef4444; }
+.library-card.suit-risk::before        { background: #ef4444; }
+.library-card.suit-hidden::before      { background: #64748b; }
+
+.library-card .card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #e2e8f0;
+}
+
+.library-card .card-cost {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+
+.library-card .card-effects {
+    font-size: 0.75rem;
+    margin-bottom: 6px;
+}
+
+.library-card .card-effects div {
+    margin-bottom: 2px;
+}
+
+.library-card-tags {
+    font-size: 0.65rem;
+    color: #64748b;
+    margin-top: 6px;
+    font-style: italic;
+}
+
+.library-card-synergy {
+    font-size: 0.65rem;
+    color: #a78bfa;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Seen/Unseen indicator */
+.library-card-seen {
+    opacity: 1;
+}
+
+.library-card-unseen {
+    opacity: 0.5;
+    filter: grayscale(0.5);
+}
+
+.library-card-unseen:hover {
+    opacity: 0.7;
+}
+
+/* ================================================= */
 /* TUTORIAL SYSTEM                                  */
 /* ================================================= */
 

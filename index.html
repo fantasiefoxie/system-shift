@@ -122,6 +122,7 @@
 
     <!-- CONTROLS -->
     <div id="controls">
+        <button id="libraryBtn">Library</button>
         <button id="exportLogBtn">Export Log</button>
         <button id="nextRoundBtn">Next Round</button>
     </div>
@@ -157,6 +158,20 @@
                     Starting leverage 4 · Strain 1.2x · Opposition 130%
                 </span>
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= LIBRARY MODAL ================= -->
+<div id="libraryModal" class="tutorial-modal" style="display: none;">
+    <div class="tutorial-content library-modal-content">
+        <h3>Card Library</h3>
+        <p style="margin-bottom: 16px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+            Cards you've played are shown at full brightness. Unplayed cards are dimmed.
+        </p>
+        <div id="libraryContent" class="library-content"></div>
+        <div class="tutorial-buttons">
+            <button class="tutorial-btn secondary" id="libraryCloseBtn">Close</button>
         </div>
     </div>
 </div>

@@ -45,6 +45,10 @@ console.log("✓ All modules imported");
 const handDiv = document.getElementById("hand");
 const nextRoundBtn = document.getElementById("nextRoundBtn");
 const exportBtn = document.getElementById("exportLogBtn");
+const libraryBtn = document.getElementById("libraryBtn");
+const libraryModal = document.getElementById("libraryModal");
+const libraryContent = document.getElementById("libraryContent");
+const libraryCloseBtn = document.getElementById("libraryCloseBtn");
 
 const roundStat = document.getElementById("roundStat");
 const surgeStat = document.getElementById("surgeStat");
@@ -127,6 +131,83 @@ function startGame() {
 
 if (exportBtn) exportBtn.addEventListener("click", exportLog);
 if (nextRoundBtn) nextRoundBtn.addEventListener("click", handleEndRound);
+
+/* ================================================= */
+/* CARD LIBRARY                                     */
+/* ================================================= */
+
+function renderLibrary() {
+    const playedCards = JSON.parse(localStorage.getItem("systemshift_played_cards") || "[]");
+    
+    // Group cards by suit
+    const suitOrder = ["care", "climate", "solidarity", "authority", "capital", "system", "risk", "hidden"];
+    const suitLabels = {
+        care: "Care",
+        climate: "Climate",
+        solidarity: "Solidarity",
+        authority: "Authority",
+        capital: "Capital",
+        system: "System",
+        risk: "Risk/Reward",
+        hidden: "Hidden"
+    };
+    
+    let html = "";
+    
+    suitOrder.forEach(suit => {
+        const cards = baseDeck.filter(c => c.suit === suit);
+        if (cards.length === 0) return;
+        
+        html += `<div class="library-section">`;
+        html += `<h4 class="library-section-title">${suitLabels[suit] || suit}</h4>`;
+        html += `<div class="library-cards">`;
+        
+        cards.forEach(card => {
+            const isPlayed = playedCards.includes(card.id);
+            const seenClass = isPlayed ? "library-card-seen" : "library-card-unseen";
+            
+            const effectsHTML = Object.entries(card.effects || {})
+                .map(([k, v]) => {
+                    const sign = v > 0 ? "+" : "";
+                    const cls = v >= 0 ? "pos" : "neg";
+                    return `<div class="${cls}">${sign}${v} ${capitalize(k)}</div>`;
+                })
+                .join("");
+            
+            const tagsHTML = card.tags ? `<div class="library-card-tags">${card.tags.join(", ")}</div>` : "";
+            const synergyHTML = card.synergy ? `<div class="library-card-synergy">Synergy: ${card.synergy.if_played_this_round.join(", ")}</div>` : "";
+            
+            html += `
+                <div class="library-card ${seenClass} suit-${card.suit}">
+                    <div class="card-title">${card.title}</div>
+                    <div class="card-cost">Cost: ${card.cost}</div>
+                    <div class="card-effects">${effectsHTML}</div>
+                    ${tagsHTML}
+                    ${synergyHTML}
+                </div>
+            `;
+        });
+        
+        html += `</div></div>`;
+    });
+    
+    libraryContent.innerHTML = html;
+}
+
+function showLibrary() {
+    renderLibrary();
+    libraryModal.style.display = "flex";
+}
+
+function hideLibrary() {
+    libraryModal.style.display = "none";
+}
+
+if (libraryBtn) libraryBtn.addEventListener("click", showLibrary);
+if (libraryCloseBtn) libraryCloseBtn.addEventListener("click", hideLibrary);
+if (libraryModal) libraryModal.addEventListener("click", (e) => {
+    if (e.target === libraryModal) hideLibrary();
+});
 
 /* ================================================= */
 /* DRAW HAND                                        */
