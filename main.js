@@ -38,6 +38,7 @@ import {
 import { scoutFaction, getScoutResult, resetScouting } from "./game/scouting.js";
 import { saveLegacy, getLegacyBonuses, getLegacy, resetLegacy } from "./game/memory.js";
 import { canNegotiate, attemptNegotiation, getNegotiationStatus } from "./game/negotiation.js";
+import { checkAchievements, getUnlocks } from "./game/achievements.js";
 
 console.log("✓ All modules imported");
 
@@ -251,7 +252,13 @@ function recordGameStats(endingType) {
     
     stats.games++;
     const isWin = !["SYSTEM COLLAPSE", "AUTHORITARIAN CONSOLIDATION"].includes(endingType);
-    if (isWin) stats.wins++;
+    if (isWin) {
+        stats.wins++;
+        // Track hard wins for achievements
+        if (gameState.difficulty?.mode === "hard") {
+            stats.hardWins = (stats.hardWins || 0) + 1;
+        }
+    }
     
     stats.endingCounts[endingType] = (stats.endingCounts[endingType] || 0) + 1;
     
@@ -702,6 +709,14 @@ function renderHand() {
         const ending = evaluateOutcome(gameState);
         recordGameStats(ending.type);
         saveLegacy(ending.type);
+        
+        // Check achievements (4.4 Meta-Progression)
+        const stats = JSON.parse(localStorage.getItem("systemshift_stats") || "{}");
+        const newAchievements = checkAchievements(stats);
+        newAchievements.forEach((achievement, i) => {
+            setTimeout(() => showAchievementToast(achievement), i * 800);
+        });
+        
         handDiv.innerHTML = `
             <div class="game-over">
                 <h2>END OF CYCLE</h2>
@@ -789,6 +804,62 @@ function capitalize(str) {
 
 // Expose tutorial function to global scope for HTML onclick handlers
 window.markTutorialComplete = markTutorialComplete;
+
+/* ================================================= */
+/* ACHIEVEMENTS (4.4 Meta-Progression)             */
+/* ================================================= */
+
+function renderAchievements() {
+    const unlocks = getUnlocks();
+    const stats = JSON.parse(localStorage.getItem("systemshift_stats") || "{}");
+    const achievements = [
+        { id: "first_win", name: "First Steps", desc: "Win your first game" },
+        { id: "five_wins", name: "Veteran", desc: "Win 5 games" },
+        { id: "transformation", name: "True Transformation", desc: "Achieve Social Transformation" },
+        { id: "ecological", name: "Green Future", desc: "Achieve Ecological Transition" },
+        { id: "dual_power", name: "Dual Power", desc: "Achieve Dual Power Transition" },
+        { id: "all_endings", name: "Historian", desc: "Reach all 7 ending types" },
+        { id: "speedrun", name: "Swift Movement", desc: "Win in 7 rounds or fewer" },
+        { id: "ten_games", name: "Committed", desc: "Play 10 games" },
+        { id: "hard_win", name: "Against All Odds", desc: "Win on Hard difficulty" },
+        { id: "negotiator", name: "Diplomat", desc: "Successfully negotiate 5 times" }
+    ];
+    
+    let html = '<div class="achievement-grid">';
+    achievements.forEach(ach => {
+        const unlocked = unlocks.achievements?.[ach.id];
+        if (unlocked) {
+            const date = new Date(unlocked.unlockedAt).toLocaleDateString();
+            html += `<div class="achievement-card unlocked"><div class="achievement-name">🏆 ${ach.name}</div><div class="achievement-desc">${ach.desc}</div><div class="achievement-date">${date}</div></div>`;
+        } else {
+            html += `<div class="achievement-card locked"><div class="achievement-name">🔒 ???</div></div>`;
+        }
+    });
+    html += '</div>';
+    
+    document.getElementById("achievementsContent").innerHTML = html;
+}
+
+function showAchievementToast(achievement) {
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.innerHTML = `🏆 Achievement Unlocked: <strong>${achievement.name}</strong> — ${achievement.desc}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 50);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+window.openAchievementsModal = function() {
+    renderAchievements();
+    document.getElementById("achievementsModal").style.display = "flex";
+};
+
+window.closeAchievementsModal = function() {
+    document.getElementById("achievementsModal").style.display = "none";
+};
 
 /* ================================================= */
 /* DIFFICULTY SELECTION                             */
