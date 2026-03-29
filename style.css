@@ -731,6 +731,103 @@ body {
 }
 
 /* ================================================= */
+/* 4A: ENHANCED VISUAL FEEDBACK                     */
+/* ================================================= */
+
+/* Synergy-ready card glow */
+.card.synergy-ready {
+    box-shadow: 0 0 12px 3px rgba(250, 204, 21, 0.6);
+    animation: synergyGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes synergyGlow {
+    0%, 100% { box-shadow: 0 0 8px 2px rgba(250, 204, 21, 0.4); }
+    50% { box-shadow: 0 0 16px 4px rgba(250, 204, 21, 0.7); }
+}
+
+/* Track intensity - driven by --track-intensity CSS variable */
+.track-halo {
+    animation-duration: calc(4s - var(--track-intensity, 0) * 2s);
+    --intensity-shadow: calc(var(--track-intensity, 0) * 30px);
+}
+
+.track-halo.intensity-high {
+    box-shadow:
+        inset 0 4px 8px rgba(255,255,255,0.05),
+        inset 0 -8px 12px rgba(0,0,0,0.6),
+        0 0 var(--intensity-shadow, 20px) var(--accent),
+        0 0 60px rgba(255,255,255,0.08);
+}
+
+/* Faction threat level indicators */
+.threat-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+.threat-dot.low {
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.threat-dot.medium {
+    background: #f59e0b;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
+.threat-dot.high {
+    background: #ef4444;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
+/* Screen shake on System Collapse */
+@keyframes screenShake {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-3px, -2px); }
+    20% { transform: translate(3px, 2px); }
+    30% { transform: translate(-2px, 3px); }
+    40% { transform: translate(2px, -3px); }
+    50% { transform: translate(-3px, 1px); }
+    60% { transform: translate(3px, -1px); }
+    70% { transform: translate(-1px, 3px); }
+    80% { transform: translate(1px, -3px); }
+    90% { transform: translate(-2px, 2px); }
+}
+
+body.screen-shake {
+    animation: screenShake 0.6s ease-in-out;
+}
+
+/* Particle burst on synergy/combos */
+.particle {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+}
+
+@keyframes burst {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--dx, 50px), var(--dy, -50px)) scale(0.3);
+    }
+}
+
+.particle.burst {
+    animation: burst 0.7s ease-out forwards;
+}
+
+/* ================================================= */
 /* NEGOTIATION SYSTEM (3C)                          */
 /* ================================================= */
 
@@ -1434,4 +1531,207 @@ button:focus {
 .narrative-summary-value {
     color: #e2e8f0;
     font-weight: 600;
+}
+
+/* ================================================= */
+/* 4C: MOBILE RESPONSIVENESS                        */
+/* ================================================= */
+
+@media (max-width: 768px) {
+    #app {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .top-bar {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px;
+    }
+    
+    .halo-stat {
+        min-width: 60px;
+    }
+    
+    .halo-label {
+        font-size: 8px;
+    }
+    
+    .halo-value {
+        font-size: 14px;
+    }
+    
+    #resources {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px;
+    }
+    
+    .resource-item {
+        min-width: 60px;
+        padding: 6px;
+    }
+    
+    .resource-label {
+        font-size: 8px;
+    }
+    
+    .resource-value {
+        font-size: 12px;
+    }
+    
+    .track-row {
+        gap: 10px;
+        padding: 10px 0;
+    }
+    
+    .track-halo {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .track-halo .halo-label {
+        font-size: 7px;
+    }
+    
+    .track-halo .halo-value {
+        font-size: 12px;
+    }
+    
+    #track-strain {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .faction-row {
+        gap: 10px;
+        padding: 8px 0;
+    }
+    
+    .faction-indicator {
+        padding: 6px 8px;
+        gap: 4px;
+    }
+    
+    .faction-name {
+        font-size: 0.6rem;
+    }
+    
+    .faction-threat {
+        font-size: 0.7rem;
+    }
+    
+    .scout-btn, .negotiate-btn {
+        padding: 3px 6px;
+        font-size: 0.6rem;
+    }
+    
+    .card-row {
+        gap: 8px;
+        padding: 6px 0;
+    }
+    
+    .card {
+        width: 80px;
+        min-width: 80px;
+        height: 120px;
+        min-height: 120px;
+        padding: 6px;
+        border-radius: 8px;
+    }
+    
+    .card-title {
+        font-size: 0.65rem;
+        margin-bottom: 4px;
+    }
+    
+    .card-cost {
+        font-size: 0.55rem;
+        margin-bottom: 4px;
+    }
+    
+    .card-effects div {
+        font-size: 0.55rem;
+        margin-bottom: 2px;
+    }
+    
+    .card::before {
+        width: 3px;
+    }
+    
+    .card .play-btn {
+        font-size: 0.55rem;
+        padding: 4px 8px;
+    }
+    
+    #controls {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 0;
+    }
+    
+    #controls button {
+        padding: 8px 16px;
+        font-size: 0.7rem;
+        min-height: 44px;
+    }
+    
+    .tutorial-content,
+    .tutorial-modal-content,
+    .library-modal-content,
+    .stats-modal-content {
+        width: 95vw;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+    
+    .tutorial-modal {
+        padding: 10px;
+    }
+    
+    .library-card {
+        width: 120px;
+        min-height: 160px;
+        padding: 8px;
+    }
+    
+    .library-card .card-title {
+        font-size: 0.75rem;
+    }
+    
+    .library-card .card-cost {
+        font-size: 0.6rem;
+    }
+    
+    .library-card .card-effects {
+        font-size: 0.65rem;
+    }
+    
+    .world-state {
+        font-size: 0.6rem;
+        padding: 6px 8px;
+    }
+    
+    .negotiation-options button {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Touch-friendly card interactions */
+@media (hover: none) {
+    .card:active {
+        transform: scale(0.97);
+    }
+    
+    .card:hover {
+        transform: none;
+        box-shadow:
+            0 10px 30px rgba(0,0,0,0.6),
+            inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    
+    button:active:not(:disabled) {
+        transform: scale(0.97);
+    }
 }

@@ -200,3 +200,124 @@ export function unmuteAll() {
 export function toggleMute() {
     muted = !muted;
 }
+
+/* ================================================= */
+/* 4B: DYNAMIC SOUNDTRACK - WEB AUDIO API           */
+/* ================================================= */
+
+let audioContext = null;
+
+function getAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext;
+}
+
+export function playFactionSting(factionId) {
+    if (muted) return;
+    
+    try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+        
+        const now = ctx.currentTime;
+        
+        if (factionId === 'elite') {
+            // Descending minor triad
+            [0, 3, 7].forEach((semitone, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 440 * Math.pow(2, semitone / 12);
+                gain.gain.setValueAtTime(0.15, now + i * 0.12);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+                osc.start(now + i * 0.12);
+                osc.stop(now + i * 0.12 + 0.4);
+            });
+        } else if (factionId === 'authoritarian') {
+            // Low drone pulse
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 110;
+            osc.type = 'sawtooth';
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        } else {
+            // Neutral two-note motif
+            [0, 5].forEach((semitone, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 330 * Math.pow(2, semitone / 12);
+                gain.gain.setValueAtTime(0.12, now + i * 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.3);
+                osc.start(now + i * 0.15);
+                osc.stop(now + i * 0.15 + 0.3);
+            });
+        }
+    } catch (e) { /* silent fail */ }
+}
+
+export function playEndingTheme(endingType) {
+    if (muted) return;
+    
+    try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+        
+        const now = ctx.currentTime;
+        const victory = ["SOCIAL TRANSFORMATION", "ECOLOGICAL TRANSITION", "DUAL POWER TRANSITION"];
+        const neutral = ["TURBULENT TRANSFORMATION", "MANAGED STABILITY", "ECOLOGICAL CONSTRAINT", "SYSTEM DRIFT"];
+        
+        if (victory.includes(endingType)) {
+            // Rising major chord progression
+            [0, 4, 7, 12].forEach((semitone, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 262 * Math.pow(2, semitone / 12);
+                gain.gain.setValueAtTime(0, now + i * 0.4);
+                gain.gain.linearRampToValueAtTime(0.1, now + i * 0.4 + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.4 + 2);
+                osc.start(now + i * 0.4);
+                osc.stop(now + i * 0.4 + 2);
+            });
+        } else if (neutral.includes(endingType)) {
+            // Ambiguous suspended chord
+            [0, 5, 10].forEach((semitone, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 294 * Math.pow(2, semitone / 12);
+                gain.gain.setValueAtTime(0, now + i * 0.3);
+                gain.gain.linearRampToValueAtTime(0.08, now + i * 0.3 + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.3 + 1.5);
+                osc.start(now + i * 0.3);
+                osc.stop(now + i * 0.3 + 1.5);
+            });
+        } else {
+            // Descending minor progression
+            [0, -3, -5, -8].forEach((semitone, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 330 * Math.pow(2, semitone / 12);
+                gain.gain.setValueAtTime(0, now + i * 0.5);
+                gain.gain.linearRampToValueAtTime(0.1, now + i * 0.5 + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.5 + 2);
+                osc.start(now + i * 0.5);
+                osc.stop(now + i * 0.5 + 2);
+            });
+        }
+    } catch (e) { /* silent fail */ }
+}

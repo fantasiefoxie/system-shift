@@ -87,17 +87,28 @@ function updateIntensity() {
 function getParticleColor() {
 
     const strain = gameState?.tracks?.strain ?? 0;
+    const climate = gameState?.tracks?.climate ?? 10;
 
-    if (strain < 6)
-        return "rgba(59,130,246,0.35)";      // calm blue
+    // Climate-tied color shift (4C: Climate ambient)
+    if (climate < 7) {
+        // Low climate: darker timbre (darker colors)
+        if (strain < 6) return "rgba(30,60,100,0.3)";
+        if (strain < 12) return "rgba(80,90,100,0.3)";
+        if (strain < 18) return "rgba(180,60,60,0.4)";
+        return "rgba(200,30,30,0.55)";
+    } else if (climate > 13) {
+        // High climate: brighter timbre (brighter colors)
+        if (strain < 6) return "rgba(80,160,246,0.4)";
+        if (strain < 12) return "rgba(180,190,210,0.4)";
+        if (strain < 18) return "rgba(239,100,80,0.5)";
+        return "rgba(255,60,60,0.7)";
+    }
 
-    if (strain < 12)
-        return "rgba(148,163,184,0.35)";     // neutral grey
-
-    if (strain < 18)
-        return "rgba(239,68,68,0.45)";       // warning red
-
-    return "rgba(255,0,0,0.65)";             // critical
+    // Normal climate
+    if (strain < 6) return "rgba(59,130,246,0.35)";
+    if (strain < 12) return "rgba(148,163,184,0.35)";
+    if (strain < 18) return "rgba(239,68,68,0.45)";
+    return "rgba(255,0,0,0.65)";
 }
 
 /* ================================================= */
