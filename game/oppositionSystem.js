@@ -178,6 +178,11 @@ export function calculateThreatLevels() {
         const multiplier = Math.min(1 + (escalation * 0.5), 2.0);
         threat *= multiplier;
 
+        // Apply difficulty opposition intensity
+        if (gameState.difficulty && gameState.difficulty.oppositionIntensity) {
+            threat *= gameState.difficulty.oppositionIntensity;
+        }
+
         // Update faction state
         factionState.threatLevel = Math.max(0, Math.min(100, threat));
         factionState.active = factionState.threatLevel > (faction.escalation?.threshold || 50);
@@ -267,6 +272,11 @@ function calculateResponseChance(faction, factionState) {
     const timeSinceLast = gameState.round - factionState.lastResponse;
     if (timeSinceLast < 3) {
         baseChance *= 0.5;
+    }
+    
+    // Apply difficulty opposition intensity to response chance
+    if (gameState.difficulty && gameState.difficulty.oppositionIntensity) {
+        baseChance *= gameState.difficulty.oppositionIntensity;
     }
     
     return Math.min(baseChance, 0.8);

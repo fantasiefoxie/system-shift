@@ -168,6 +168,11 @@ function applyStructuralStrainDrift() {
         strainDelta = Math.round(strainDelta * currentAct.modifiers.strainMultiplier);
     }
 
+    // Apply difficulty strain multiplier
+    if (gameState.difficulty && gameState.difficulty.strainMultiplier) {
+        strainDelta = Math.round(strainDelta * gameState.difficulty.strainMultiplier);
+    }
+
     // Strain acceleration: when strain > 14, it drifts faster toward collapse
     if (strain > 14) {
         const acceleration = Math.floor((strain - 14) / 2);

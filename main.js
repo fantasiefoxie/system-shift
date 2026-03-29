@@ -85,11 +85,14 @@ function startGame() {
     initLogger(seed);
     resetPhaseTracking();
 
+    // Apply difficulty to starting leverage
+    const startingLeverage = gameState.maxLeverage + (gameState.difficulty?.leverageOffset || 0);
+
     Object.assign(gameState, {
         round: 1,
         gameOver: false,
         playsThisRound: 0,
-        leverage: gameState.maxLeverage,
+        leverage: startingLeverage,
         surge: 0,
         playerHand: [],
         discardPile: []
@@ -329,7 +332,15 @@ function renderHand() {
                 <button id="restartBtn">Restart</button>
             </div>
         `;
-        document.getElementById("restartBtn").addEventListener("click", startGame);
+        document.getElementById("restartBtn").addEventListener("click", () => {
+            // Show difficulty modal instead of directly starting
+            const modal = document.getElementById("difficultyModal");
+            if (modal) {
+                modal.style.display = "flex";
+            } else {
+                startGame();
+            }
+        });
         return;
     }
 
@@ -401,10 +412,64 @@ function capitalize(str) {
 // Expose tutorial function to global scope for HTML onclick handlers
 window.markTutorialComplete = markTutorialComplete;
 
+/* ================================================= */
+/* DIFFICULTY SELECTION                             */
+/* ================================================= */
+
+const difficultyConfigs = {
+    easy: {
+        mode: "easy",
+        leverageOffset: 2,
+        strainMultiplier: 0.6,
+        oppositionIntensity: 0.7
+    },
+    normal: {
+        mode: "normal",
+        leverageOffset: 0,
+        strainMultiplier: 1.0,
+        oppositionIntensity: 1.0
+    },
+    hard: {
+        mode: "hard",
+        leverageOffset: -1,
+        strainMultiplier: 1.2,
+        oppositionIntensity: 1.3
+    }
+};
+
+function selectDifficulty(mode) {
+    const config = difficultyConfigs[mode];
+    if (!config) {
+        console.error("Unknown difficulty mode:", mode);
+        return;
+    }
+
+    // Apply difficulty to game state
+    gameState.difficulty = { ...config };
+
+    // Hide modal
+    const modal = document.getElementById("difficultyModal");
+    if (modal) modal.style.display = "none";
+
+    console.log("Difficulty set to:", mode);
+    startGame();
+}
+
+// Expose to global scope for HTML onclick handlers
+window.selectDifficulty = selectDifficulty;
+
 try {
     console.log("Initializing...");
     initAmbientEngine();
-    startGame();
+    
+    // Show difficulty selection modal instead of auto-starting
+    const modal = document.getElementById("difficultyModal");
+    if (modal) {
+        modal.style.display = "flex";
+    } else {
+        // Fallback: start with normal difficulty
+        selectDifficulty("normal");
+    }
     console.log("Initialization complete");
 } catch (error) {
     console.error("Fatal error:", error);

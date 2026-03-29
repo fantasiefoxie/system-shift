@@ -121,5 +121,16 @@ export const gameState = {
         historicalEvents: [],
         currentNarrative: null,
         narrativeChoices: []
+    },
+
+    /* ================================================= */
+    /* DIFFICULTY MODE                                  */
+    /* ================================================= */
+
+    difficulty: {
+        mode: "normal",
+        leverageOffset: 0,        // +2 Easy, 0 Normal, -1 Hard
+        strainMultiplier: 1.0,    // 0.6 Easy, 1.0 Normal, 1.2 Hard
+        oppositionIntensity: 1.0  // 0.7 Easy, 1.0 Normal, 1.3 Hard
     }
 };

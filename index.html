@@ -128,6 +128,39 @@
 
 </div>
 
+<!-- ================= DIFFICULTY SELECTION ================= -->
+<div id="difficultyModal" class="tutorial-modal" style="display: none;">
+    <div class="tutorial-content" style="max-width: 480px;">
+        <h3>Select Difficulty</h3>
+        <p style="margin-bottom: 24px; text-align: center; color: #cbd5e1;">
+            Choose how challenging your transformation will be.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="tutorial-btn difficulty-btn" onclick="window.selectDifficulty('easy')" 
+                    style="background: linear-gradient(145deg, #166534, #15803d); border: 1px solid #22c55e;">
+                <strong>EASY</strong>
+                <span style="display: block; font-size: 0.8rem; font-weight: 400; margin-top: 4px; color: #bbf7d0;">
+                    Starting leverage 7 · Strain 0.6x · Opposition 70%
+                </span>
+            </button>
+            <button class="tutorial-btn difficulty-btn" onclick="window.selectDifficulty('normal')"
+                    style="background: linear-gradient(145deg, #1e3a5f, #1d4ed8); border: 1px solid #3b82f6;">
+                <strong>NORMAL</strong>
+                <span style="display: block; font-size: 0.8rem; font-weight: 400; margin-top: 4px; color: #bfdbfe;">
+                    Starting leverage 5 · Strain 1.0x · Opposition 100%
+                </span>
+            </button>
+            <button class="tutorial-btn difficulty-btn" onclick="window.selectDifficulty('hard')"
+                    style="background: linear-gradient(145deg, #7f1d1d, #b91c1c); border: 1px solid #ef4444;">
+                <strong>HARD</strong>
+                <span style="display: block; font-size: 0.8rem; font-weight: 400; margin-top: 4px; color: #fecaca;">
+                    Starting leverage 4 · Strain 1.2x · Opposition 130%
+                </span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ================= AUDIO LAYERS ================= -->
 
 <audio id="bgCalm" src="./assets/audio/calm.mp3" preload="auto"></audio>
