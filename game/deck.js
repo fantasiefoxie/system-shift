@@ -100,7 +100,20 @@ export const baseDeck = [
 { id: 701, suit: "hidden", title: "Unknown Policy", effects: {}, cost: 0, tags: ["hidden"], hidden: true, revealCost: 1 },
 { id: 702, suit: "hidden", title: "Secret Initiative", effects: {}, cost: 0, tags: ["hidden"], hidden: true, revealCost: 2 },
 { id: 703, suit: "hidden", title: "Covert Operation", effects: {}, cost: 0, tags: ["hidden"], hidden: true, revealCost: 1 },
-{ id: 704, suit: "hidden", title: "Wildcard", effects: {}, cost: 0, tags: ["hidden"], hidden: true, revealCost: 3 }
+{ id: 704, suit: "hidden", title: "Wildcard", effects: {}, cost: 0, tags: ["hidden"], hidden: true, revealCost: 3 },
+
+/* ================= DECK EVOLUTION (10) ================= */
+
+{ id: 801, suit: "system", title: "Nationalize Industry", effects: { capital: -5, authority: 3, strain: 4 }, cost: 4, tags: ["radical", "economic", "disruptive"], onPlay: { removeTag: "capital", addCard: 802 } },
+{ id: 802, suit: "system", title: "State Enterprise", effects: { care: 2, capital: 1 }, cost: 2, tags: ["institutional", "economic"] },
+{ id: 803, suit: "system", title: "Movement Split", effects: { solidarity: 3, strain: 3 }, cost: 2, tags: ["crisis", "organizing"], onPlay: { addCard: 804 } },
+{ id: 804, suit: "system", title: "Internal Conflict", effects: { solidarity: -1, strain: 2 }, cost: 1, tags: ["crisis"] },
+{ id: 805, suit: "system", title: "Debt Burden", effects: { leverage: -1, strain: 1 }, cost: 0, tags: ["crisis", "economic"] },
+{ id: 806, suit: "system", title: "Radical Wing", effects: { solidarity: 2, strain: 2, surge: 1 }, cost: 2, tags: ["radical", "organizing"] },
+{ id: 807, suit: "system", title: "Dual Power", effects: { solidarity: 4, authority: -3, strain: 3 }, cost: 4, tags: ["radical", "organizing", "disruptive"] },
+{ id: 808, suit: "system", title: "Popular Assembly", effects: { solidarity: 3, authority: -1 }, cost: 2, tags: ["grassroots", "organizing"] },
+{ id: 809, suit: "system", title: "Strike Fund", effects: { solidarity: 2, care: 1 }, cost: 2, tags: ["labor", "organizing"] },
+{ id: 810, suit: "system", title: "Mutual Aid Network", effects: { care: 2, solidarity: 1 }, cost: 2, tags: ["grassroots", "organizing"] }
 
 ];
 
@@ -142,4 +155,29 @@ export function drawCard() {
     }
 
     return card;
+}
+
+/* ================================================= */
+/* DECK EVOLUTION                                   */
+/* ================================================= */
+
+export function addCardToDeck(cardId) {
+    const card = baseDeck.find(c => c.id === cardId);
+    if (card) {
+        gameState.deck.push({ ...card });
+        log("CARD_ADDED", { cardId });
+    }
+}
+
+export function removeCardFromDeck(cardId) {
+    const index = gameState.deck.findIndex(c => c.id === cardId);
+    if (index !== -1) {
+        gameState.deck.splice(index, 1);
+        log("CARD_REMOVED", { cardId });
+    }
+}
+
+export function removeCardsByTag(tag) {
+    gameState.deck = gameState.deck.filter(c => !c.tags || !c.tags.includes(tag));
+    log("TAG_REMOVED", { tag });
 }

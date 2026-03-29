@@ -26,6 +26,7 @@ import {
     processOppositionPhase
 } from "./oppositionActions.js";
 import { getCurrentAct } from "./acts.js";
+import { addCardToDeck, removeCardFromDeck, removeCardsByTag } from "./deck.js";
 
 /* Track surge changes within round */
 let surgeDeltaThisRound = 0;
@@ -78,6 +79,19 @@ export function playCard(index) {
     }
 
     applyEffects(card.effects || {});
+
+    // Execute onPlay deck modifications
+    if (card.onPlay) {
+        if (card.onPlay.addCard) {
+            addCardToDeck(card.onPlay.addCard);
+        }
+        if (card.onPlay.removeCard) {
+            removeCardFromDeck(card.onPlay.removeCard);
+        }
+        if (card.onPlay.removeTag) {
+            removeCardsByTag(card.onPlay.removeTag);
+        }
+    }
 
     /* Structural surge bonus */
     if (card.suit === "authority" || card.suit === "solidarity") {
