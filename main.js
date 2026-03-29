@@ -36,6 +36,7 @@ import {
     getCardFlavor
 } from "./game/narrative.js";
 import { scoutFaction, getScoutResult, resetScouting } from "./game/scouting.js";
+import { saveLegacy, getLegacyBonuses, getLegacy, resetLegacy } from "./game/memory.js";
 
 console.log("✓ All modules imported");
 
@@ -151,9 +152,18 @@ function startGame() {
 
     addHiddenCards();
 
+    // Apply legacy bonuses from previous games (3B: Historical Memory)
+    const bonuses = getLegacyBonuses();
+    Object.entries(bonuses).forEach(([track, delta]) => {
+        if (gameState.tracks[track] !== undefined) {
+            gameState.tracks[track] = Math.max(0, Math.min(20, gameState.tracks[track] + delta));
+        }
+    });
+
     console.log("Hand has", gameState.playerHand.length, "cards");
 
     render();
+    renderWorldState();
     console.log("Game started successfully");
     
     // Trigger tutorial event
@@ -467,6 +477,31 @@ function renderFactions() {
     });
 }
 
+function renderWorldState() {
+    const legacy = getLegacy();
+    const worldStateEl = document.getElementById("worldState");
+    const worldStateText = document.getElementById("worldStateText");
+    
+    if (!worldStateEl || !worldStateText) return;
+    
+    if (legacy.gamesPlayed > 0) {
+        const bonusEntries = Object.entries(legacy.legacyBonuses || {});
+        let bonusText = "none";
+        
+        if (bonusEntries.length > 0) {
+            bonusText = bonusEntries.map(([track, delta]) => {
+                const sign = delta > 0 ? "+" : "";
+                return `${track} ${sign}${delta}`;
+            }).join(", ");
+        }
+        
+        worldStateText.textContent = `Games played: ${legacy.gamesPlayed} | Last ending: ${legacy.lastEnding || "—"} | Legacy: ${bonusText}`;
+        worldStateEl.style.display = "block";
+    } else {
+        worldStateEl.style.display = "none";
+    }
+}
+
 /* ================================================= */
 /* UPDATE TOP BAR                                   */
 /* ================================================= */
@@ -613,6 +648,7 @@ function renderHand() {
     if (gameState.gameOver) {
         const ending = evaluateOutcome(gameState);
         recordGameStats(ending.type);
+        saveLegacy(ending.type);
         handDiv.innerHTML = `
             <div class="game-over">
                 <h2>END OF CYCLE</h2>
