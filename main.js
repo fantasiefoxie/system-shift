@@ -49,6 +49,11 @@ const libraryBtn = document.getElementById("libraryBtn");
 const libraryModal = document.getElementById("libraryModal");
 const libraryContent = document.getElementById("libraryContent");
 const libraryCloseBtn = document.getElementById("libraryCloseBtn");
+const statsBtn = document.getElementById("statsBtn");
+const statsModal = document.getElementById("statsModal");
+const statsContent = document.getElementById("statsContent");
+const statsCloseBtn = document.getElementById("statsCloseBtn");
+const statsResetBtn = document.getElementById("statsResetBtn");
 
 const roundStat = document.getElementById("roundStat");
 const surgeStat = document.getElementById("surgeStat");
@@ -131,6 +136,141 @@ function startGame() {
 
 if (exportBtn) exportBtn.addEventListener("click", exportLog);
 if (nextRoundBtn) nextRoundBtn.addEventListener("click", handleEndRound);
+
+/* ================================================= */
+/* STATISTICS                                       */
+/* ================================================= */
+
+function getDefaultStats() {
+    return {
+        games: 0,
+        wins: 0,
+        endingCounts: {},
+        avgTrackValues: { care: 0, climate: 0, solidarity: 0, authority: 0, capital: 0, strain: 0 },
+        cardPlayCounts: {},
+        synergyTriggerCount: 0,
+        fastestWin: null,
+        longestGame: null
+    };
+}
+
+function recordGameStats(endingType) {
+    const stats = JSON.parse(localStorage.getItem("systemshift_stats") || JSON.stringify(getDefaultStats()));
+    
+    stats.games++;
+    const isWin = !["SYSTEM COLLAPSE", "AUTHORITARIAN CONSOLIDATION"].includes(endingType);
+    if (isWin) stats.wins++;
+    
+    stats.endingCounts[endingType] = (stats.endingCounts[endingType] || 0) + 1;
+    
+    // Running average for track values
+    const t = gameState.tracks;
+    const n = stats.games;
+    ["care", "climate", "solidarity", "authority", "capital", "strain"].forEach(k => {
+        stats.avgTrackValues[k] = ((stats.avgTrackValues[k] * (n-1)) + t[k]) / n;
+    });
+    
+    // Card play counts from memory
+    gameState.memory.cardsPlayed.forEach(c => {
+        stats.cardPlayCounts[c.id] = (stats.cardPlayCounts[c.id] || 0) + 1;
+    });
+    
+    // Fastest/longest
+    const rounds = gameState.round;
+    if (isWin && (stats.fastestWin === null || rounds < stats.fastestWin)) {
+        stats.fastestWin = rounds;
+    }
+    if (stats.longestGame === null || rounds > stats.longestGame) {
+        stats.longestGame = rounds;
+    }
+    
+    localStorage.setItem("systemshift_stats", JSON.stringify(stats));
+}
+
+function renderStats() {
+    const stats = JSON.parse(localStorage.getItem("systemshift_stats") || JSON.stringify(getDefaultStats()));
+    
+    let html = "";
+    
+    // Summary
+    const winRate = stats.games > 0 ? ((stats.wins / stats.games) * 100).toFixed(1) : "0.0";
+    html += `<div class="stats-summary">`;
+    html += `<div class="stats-summary-row"><span class="stats-label">Total Games</span><span class="stats-value">${stats.games}</span></div>`;
+    html += `<div class="stats-summary-row"><span class="stats-label">Wins</span><span class="stats-value">${stats.wins}</span></div>`;
+    html += `<div class="stats-summary-row"><span class="stats-label">Win Rate</span><span class="stats-value">${winRate}%</span></div>`;
+    html += `</div>`;
+    
+    // Ending distribution bar chart
+    const endingColors = {
+        "SOCIAL TRANSFORMATION": "#22c55e",
+        "ECOLOGICAL TRANSITION": "#10b981",
+        "TURBULENT TRANSFORMATION": "#f59e0b",
+        "MANAGED STABILITY": "#3b82f6",
+        "SYSTEM DRIFT": "#94a3b8",
+        "DUAL POWER TRANSITION": "#a78bfa",
+        "SYSTEM COLLAPSE": "#ef4444",
+        "AUTHORITARIAN CONSOLIDATION": "#dc2626",
+        "ECOLOGICAL CONSTRAINT": "#64748b"
+    };
+    
+    const maxEndingCount = Math.max(1, ...Object.values(stats.endingCounts));
+    
+    html += `<div class="stats-section"><h4 class="stats-section-title">Ending Distribution</h4>`;
+    Object.entries(stats.endingCounts).sort((a, b) => b[1] - a[1]).forEach(([ending, count]) => {
+        const pct = ((count / stats.games) * 100).toFixed(1);
+        const barWidth = (count / maxEndingCount) * 100;
+        const color = endingColors[ending] || "#94a3b8";
+        html += `<div class="stats-bar-row">`;
+        html += `<span class="stats-bar-label">${ending}</span>`;
+        html += `<div class="stats-bar-track"><div class="stats-bar-fill" style="width:${barWidth}%;background:${color}"></div></div>`;
+        html += `<span class="stats-bar-count">${count} (${pct}%)</span>`;
+        html += `</div>`;
+    });
+    html += `</div>`;
+    
+    // Top 5 cards
+    const topCards = Object.entries(stats.cardPlayCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    if (topCards.length > 0) {
+        html += `<div class="stats-section"><h4 class="stats-section-title">Most Played Cards</h4>`;
+        topCards.forEach(([id, count], i) => {
+            const card = baseDeck.find(c => c.id == id);
+            const title = card ? card.title : `Card #${id}`;
+            html += `<div class="stats-card-row"><span class="stats-card-rank">${i+1}.</span><span class="stats-card-title">${title}</span><span class="stats-card-count">${count} plays</span></div>`;
+        });
+        html += `</div>`;
+    }
+    
+    // Fastest/longest
+    html += `<div class="stats-section"><h4 class="stats-section-title">Records</h4>`;
+    html += `<div class="stats-summary-row"><span class="stats-label">Fastest Win</span><span class="stats-value">${stats.fastestWin ? stats.fastestWin + " rounds" : "—"}</span></div>`;
+    html += `<div class="stats-summary-row"><span class="stats-label">Longest Game</span><span class="stats-value">${stats.longestGame ? stats.longestGame + " rounds" : "—"}</span></div>`;
+    html += `</div>`;
+    
+    statsContent.innerHTML = html;
+}
+
+function showStats() {
+    renderStats();
+    statsModal.style.display = "flex";
+}
+
+function hideStats() {
+    statsModal.style.display = "none";
+}
+
+function resetStats() {
+    if (confirm("Are you sure you want to reset all statistics? This cannot be undone.")) {
+        localStorage.removeItem("systemshift_stats");
+        renderStats();
+    }
+}
+
+if (statsBtn) statsBtn.addEventListener("click", showStats);
+if (statsCloseBtn) statsCloseBtn.addEventListener("click", hideStats);
+if (statsResetBtn) statsResetBtn.addEventListener("click", resetStats);
+if (statsModal) statsModal.addEventListener("click", (e) => {
+    if (e.target === statsModal) hideStats();
+});
 
 /* ================================================= */
 /* CARD LIBRARY                                     */
@@ -405,6 +545,7 @@ function renderHand() {
 
     if (gameState.gameOver) {
         const ending = evaluateOutcome(gameState);
+        recordGameStats(ending.type);
         handDiv.innerHTML = `
             <div class="game-over">
                 <h2>END OF CYCLE</h2>
