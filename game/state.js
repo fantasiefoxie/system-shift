@@ -159,5 +159,11 @@ export const gameState = {
         maxClimate: 8,
         cardsPlayed: [],
         eventsChosen: []
-    }
+    },
+
+    /* ================================================= */
+    /* THRESHOLDS (PART 10)                             */
+    /* ================================================= */
+
+    activeThresholds: []
 };

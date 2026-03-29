@@ -84,7 +84,13 @@ function simulateGame(gameSeed) {
         pushback: { eliteResistance: 0, transitionShock: 0, value: 0 },
         deck: shuffle([...baseDeck]),
         hand: [],
-        discard: []
+        discard: [],
+        // Part 8: Hidden tracks
+        hiddenTracks: { eliteCohesion: 10, movementMorale: 10, internationalPressure: 5 },
+        // Part 9: Memory
+        memory: { maxCare: 8, maxClimate: 8, cardsPlayed: [] },
+        // Part 10: Thresholds
+        activeThresholds: []
     };
     
     const cardLog = [];
@@ -238,6 +244,74 @@ function simulateGame(gameSeed) {
             state.tracks.strain = Math.max(0, state.tracks.strain - 1);
         }
         
+        // Part 8: Hidden tracks update
+        if (state.tracks.authority + state.tracks.capital < 20) {
+            state.hiddenTracks.eliteCohesion = Math.max(0, state.hiddenTracks.eliteCohesion - 1);
+        }
+        if (state.tracks.care + state.tracks.solidarity > 30) {
+            state.hiddenTracks.movementMorale = Math.min(20, state.hiddenTracks.movementMorale + 1);
+        }
+        state.hiddenTracks.internationalPressure += Math.floor(random() * 3) - 1;
+        state.hiddenTracks.internationalPressure = Math.max(0, Math.min(10, state.hiddenTracks.internationalPressure));
+        
+        // Part 9: Memory checks
+        if (state.tracks.care < state.memory.maxCare - 3) {
+            // Broken promise
+            state.tracks.solidarity = Math.max(0, state.tracks.solidarity - 2);
+            state.tracks.strain = Math.min(20, state.tracks.strain + 2);
+        }
+        const tagCounts = {};
+        state.memory.cardsPlayed.forEach(card => {
+            if (card.tags) {
+                card.tags.forEach(tag => {
+                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                });
+            }
+        });
+        if (Math.max(...Object.values(tagCounts)) >= 5) {
+            // Consistent vision
+            state.surge += 2;
+            state.tracks.solidarity += 1;
+        }
+        
+        // Part 10: Threshold checks
+        // mass_movement: solidarity >= 15
+        if (!state.activeThresholds.includes("mass_movement") && state.tracks.solidarity >= 15) {
+            state.activeThresholds.push("mass_movement");
+        }
+        // legitimacy_crisis: authority <= 3
+        if (!state.activeThresholds.includes("legitimacy_crisis") && state.tracks.authority <= 3) {
+            state.activeThresholds.push("legitimacy_crisis");
+        }
+        // climate_emergency: climate <= 5 AND round >= 6
+        if (!state.activeThresholds.includes("climate_emergency") && state.tracks.climate <= 5 && state.round >= 6) {
+            state.activeThresholds.push("climate_emergency");
+            state.tracks.strain = Math.min(20, state.tracks.strain + 2);
+        }
+        // dual_power: solidarity >= 18 AND authority <= 5
+        if (!state.activeThresholds.includes("dual_power") && state.tracks.solidarity >= 18 && state.tracks.authority <= 5) {
+            state.activeThresholds.push("dual_power");
+        }
+        // fascist_threat: strain >= 16 AND capital >= 15 AND authority >= 12
+        if (!state.activeThresholds.includes("fascist_threat") && state.tracks.strain >= 16 && state.tracks.capital >= 15 && state.tracks.authority >= 12) {
+            state.activeThresholds.push("fascist_threat");
+        }
+        // economic_collapse: capital <= 3
+        if (!state.activeThresholds.includes("economic_collapse") && state.tracks.capital <= 3) {
+            state.activeThresholds.push("economic_collapse");
+            state.tracks.strain = Math.min(20, state.tracks.strain + 5);
+        }
+        // popular_uprising: solidarity >= 18 AND strain >= 15
+        if (!state.activeThresholds.includes("popular_uprising") && state.tracks.solidarity >= 18 && state.tracks.strain >= 15) {
+            state.activeThresholds.push("popular_uprising");
+            state.surge += 5;
+        }
+        // green_transition: climate >= 18 AND care >= 15
+        if (!state.activeThresholds.includes("green_transition") && state.tracks.climate >= 18 && state.tracks.care >= 15) {
+            state.activeThresholds.push("green_transition");
+            state.tracks.strain = Math.max(0, state.tracks.strain - 2);
+        }
+        
         if (surgeDelta <= 0 && state.surge > 0) state.surge -= 1;
         surgeDelta = 0;
     }
@@ -250,14 +324,16 @@ function simulateGame(gameSeed) {
     let outcome;
     // Check most restrictive conditions first
     if (t.strain >= 12 && powerGap <= 5) outcome = "SYSTEM COLLAPSE";
-    else if (t.strain >= 10 && t.authority >= 10 && t.capital >= 18) outcome = "AUTHORITARIAN CONSOLIDATION";
+    else if (t.strain >= 8 && t.authority >= 10 && t.capital >= 16) outcome = "AUTHORITARIAN CONSOLIDATION";
     else if (t.climate <= 8 && socialPower < 25 && t.strain >= 4) outcome = "ECOLOGICAL CONSTRAINT";
     else if (t.strain < 14 && Math.abs(powerGap) <= 14 && t.care >= 10 && t.climate >= 10) outcome = "MANAGED STABILITY";
     // Check positive endings BEFORE TURBULENT TRANSFORMATION
-    else if (t.climate >= 18 && powerGap > 8 && t.strain < 14) outcome = "ECOLOGICAL TRANSITION";
-    else if (socialPower >= -6 && powerGap > 8 && t.strain < 14) outcome = "SOCIAL TRANSFORMATION";
-    // TURBULENT TRANSFORMATION catches remaining high-strain games
-    else if (t.strain >= 33 && powerGap > 0 && socialPower >= 20) outcome = "TURBULENT TRANSFORMATION";
+    else if (t.climate >= 18 && powerGap > 5 && t.strain < 14) outcome = "ECOLOGICAL TRANSITION";
+    else if (socialPower >= 24 && powerGap > 3 && t.strain < 16) outcome = "SOCIAL TRANSFORMATION";
+    // Part 10: Dual power threshold ending
+    else if (state.activeThresholds.includes("dual_power")) outcome = "DUAL POWER TRANSITION";
+    // TURBULENT TRANSFORMATION catches remaining high-strain games - tightened
+    else if (t.strain >= 18 && powerGap > 5 && socialPower >= 28) outcome = "TURBULENT TRANSFORMATION";
     else outcome = "SYSTEM DRIFT";
     
     return { outcome, tracks: t, pushback: state.pushback.value, surge: state.surge, cardLog };

@@ -149,6 +149,19 @@ export function evaluateOutcome(gameState) {
     }
 
     /* ------------------------------------------------- */
+    /* 8. DUAL POWER TRANSITION                          */
+    /* Threshold-based ending: parallel institutions     */
+    /* ------------------------------------------------- */
+
+    if (gameState.activeThresholds && gameState.activeThresholds.includes("dual_power")) {
+        return {
+            type: "DUAL POWER TRANSITION",
+            message: "Parallel institutions have replaced the old order.",
+            tags: { transformative: true, revolutionary: true }
+        };
+    }
+
+    /* ------------------------------------------------- */
     /* Fallback: SYSTEM DRIFT                            */
     /* ------------------------------------------------- */
 

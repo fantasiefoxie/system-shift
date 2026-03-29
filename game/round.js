@@ -29,6 +29,7 @@ import { getCurrentAct } from "./acts.js";
 import { addCardToDeck, removeCardFromDeck, removeCardsByTag } from "./deck.js";
 import { updateHiddenTracks } from "./hiddenTracks.js";
 import { checkMemory } from "./memory.js";
+import { checkThresholds } from "./thresholds.js";
 
 /* Track surge changes within round */
 let surgeDeltaThisRound = 0;
@@ -415,6 +416,12 @@ export function endRound() {
         applyEffects(memoryResult.effect);
         log("MEMORY_TRIGGERED", memoryResult);
     }
+
+    /* --------------------------------------------- */
+    /* 6d. THRESHOLD CHECK (Part 10)                */
+    /* --------------------------------------------- */
+    
+    checkThresholds();
 
     /* --------------------------------------------- */
     /* 7. RESET ROUND STATE                         */
