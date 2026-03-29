@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Simple Test</title>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            padding: 40px; 
+            background: #1a1a1a; 
+            color: white;
+        }
+        .card {
+            width: 200px;
+            height: 280px;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 14px;
+            display: inline-block;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Browser Test</h1>
+    <p>If you can see this and the cards below, your browser is working:</p>
+    
+    <div class="card">
+        <h3>Test Card 1</h3>
+        <p>This is a test card</p>
+    </div>
+    
+    <div class="card">
+        <h3>Test Card 2</h3>
+        <p>This is another test card</p>
+    </div>
+    
+    <div class="card">
+        <h3>Test Card 3</h3>
+        <p>Third test card</p>
+    </div>
+
+    <script>
+        console.log("Simple test loaded successfully!");
+        document.body.innerHTML += '<p style="color:#0f0;">✓ JavaScript is working!</p>';
+    </script>
+</body>
+</html>

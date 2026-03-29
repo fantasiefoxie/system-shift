@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Debug Test</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            padding: 20px; 
+            background: #000; 
+            color: #0f0;
+        }
+        #output { 
+            white-space: pre-wrap; 
+            background: #111;
+            padding: 15px;
+            border: 1px solid #0f0;
+            min-height: 200px;
+        }
+        .error { color: #f44; }
+        .success { color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>System Shift - Step-by-Step Debug</h1>
+    <div id="output">Starting tests...</div>
+
+    <script type="module">
+        const output = document.getElementById("output");
+        let logText = "";
+        
+        function log(msg, isError = false) {
+            logText += (isError ? '<span class="error">' : '<span class="success">') + msg + '</span>\n';
+            output.innerHTML = logText;
+            console.log(msg);
+        }
+
+        try {
+            log("Step 1: Testing state.js...");
+            const state = await import("./game/state.js");
+            log("  ✓ state.js loaded - gameState exists: " + (state.gameState ? "yes" : "no"));
+            
+            log("Step 2: Testing rng.js...");
+            const rng = await import("./game/rng.js");
+            log("  ✓ rng.js loaded - exports: " + Object.keys(rng).join(", "));
+            
+            log("Step 3: Testing logger.js...");
+            const logger = await import("./game/logger.js");
+            log("  ✓ logger.js loaded - exports: " + Object.keys(logger).join(", "));
+            
+            log("Step 4: Testing audioManager.js...");
+            const audio = await import("./game/audioManager.js");
+            log("  ✓ audioManager.js loaded - exports: " + Object.keys(audio).join(", "));
+            
+            log("Step 5: Testing deck.js...");
+            const deck = await import("./game/deck.js");
+            log("  ✓ deck.js loaded - cards: " + deck.baseDeck.length);
+            
+            log("Step 6: Testing round.js...");
+            const round = await import("./game/round.js");
+            log("  ✓ round.js loaded - exports: " + Object.keys(round).join(", "));
+            
+            log("Step 7: Testing resourceManagement.js...");
+            const res = await import("./game/resourceManagement.js");
+            log("  ✓ resourceManagement.js loaded - exports: " + Object.keys(res).length + " items");
+            
+            log("Step 8: Testing cardInteractions.js...");
+            const cardInt = await import("./game/cardInteractions.js");
+            log("  ✓ cardInteractions.js loaded - exports: " + Object.keys(cardInt).length + " items");
+            
+            log("Step 9: Testing oppositionSystem.js...");
+            const oppSys = await import("./game/oppositionSystem.js");
+            log("  ✓ oppositionSystem.js loaded - exports: " + Object.keys(oppSys).length + " items");
+            
+            log("Step 10: Testing oppositionActions.js...");
+            const oppAct = await import("./game/oppositionActions.js");
+            log("  ✓ oppositionActions.js loaded - exports: " + Object.keys(oppAct).length + " items");
+            
+            log("Step 11: Testing phaseEngine.js...");
+            const phase = await import("./game/phaseEngine.js");
+            log("  ✓ phaseEngine.js loaded - exports: " + Object.keys(phase).length + " items");
+            
+            log("Step 12: Testing outcomeEngine.js...");
+            const outcome = await import("./game/outcomeEngine.js");
+            log("  ✓ outcomeEngine.js loaded - exports: " + Object.keys(outcome).length + " items");
+            
+            log("Step 13: Testing effectResolver.js...");
+            const resolver = await import("./game/effectResolver.js");
+            log("  ✓ effectResolver.js loaded - exports: " + Object.keys(resolver).length + " items");
+            
+            log("Step 14: Testing ambientEngine.js...");
+            const ambient = await import("./game/ambientEngine.js");
+            log("  ✓ ambientEngine.js loaded - exports: " + Object.keys(ambient).length + " items");
+            
+            log("\n=== ALL MODULES LOADED ===");
+            log("Now testing main.js...");
+            
+            log("Step 15: Testing main.js...");
+            const main = await import("./main.js");
+            log("  ✓ main.js loaded successfully!");
+            
+            log("\n=== COMPLETE SUCCESS ===");
+            log("All modules loaded without errors.");
+            
+        } catch (error) {
+            log("\n=== CRASH ===", true);
+            log("Error: " + error.message, true);
+            log("File: " + (error.stack?.split('\n')[1] || 'unknown'), true);
+            log("\nFull stack:\n" + error.stack, true);
+        }
+    </script>
+</body>
+</html>

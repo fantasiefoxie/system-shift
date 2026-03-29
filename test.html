@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>System Shift - Debug Test</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            padding: 20px; 
+            background: #1a1a1a; 
+            color: #0f0;
+        }
+        #output { 
+            white-space: pre-wrap; 
+            background: #000;
+            padding: 15px;
+            border: 1px solid #0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>System Shift - Module Test</h1>
+    <div id="output">Testing module imports...</div>
+
+    <script type="module">
+        const output = document.getElementById("output");
+        let log = "";
+        
+        function append(msg) {
+            log += msg + "\n";
+            output.textContent = log;
+            console.log(msg);
+        }
+
+        try {
+            append("1. Loading state module...");
+            const { gameState } = await import("./game/state.js");
+            append("   ✓ State loaded: leverage=" + gameState.leverage);
+
+            append("2. Loading rng module...");
+            const { setSeed, shuffle } = await import("./game/rng.js");
+            append("   ✓ RNG loaded");
+
+            append("3. Loading deck module...");
+            const { baseDeck, shuffleDeck } = await import("./game/deck.js");
+            append("   ✓ Deck loaded: " + baseDeck.length + " cards");
+
+            append("4. Loading logger module...");
+            const { initLogger } = await import("./game/logger.js");
+            append("   ✓ Logger loaded");
+
+            append("5. Loading round module...");
+            const { endRound, playCard } = await import("./game/round.js");
+            append("   ✓ Round module loaded");
+
+            append("6. Loading resourceManagement module...");
+            const { initResourceSystem } = await import("./game/resourceManagement.js");
+            append("   ✓ Resource system loaded");
+
+            append("7. Loading cardInteractions module...");
+            const { initInteractionState, addHiddenCards } = await import("./game/cardInteractions.js");
+            append("   ✓ Card interactions loaded");
+
+            append("8. Loading oppositionSystem module...");
+            const { initOppositionSystem } = await import("./game/oppositionSystem.js");
+            append("   ✓ Opposition system loaded");
+
+            append("9. Loading oppositionActions module...");
+            const { initOppositionActions } = await import("./game/oppositionActions.js");
+            append("   ✓ Opposition actions loaded");
+
+            append("10. Loading phaseEngine module...");
+            const { checkSystemPhases, resetPhaseTracking } = await import("./game/phaseEngine.js");
+            append("   ✓ Phase engine loaded");
+
+            append("11. Loading outcomeEngine module...");
+            const { evaluateOutcome } = await import("./game/outcomeEngine.js");
+            append("   ✓ Outcome engine loaded");
+
+            append("12. Loading effectResolver module...");
+            const { resolveCard } = await import("./game/effectResolver.js");
+            append("   ✓ Effect resolver loaded");
+
+            append("13. Loading ambientEngine module...");
+            const { initAmbientEngine } = await import("./game/ambientEngine.js");
+            append("   ✓ Ambient engine loaded");
+
+            append("\n=== ALL MODULES LOADED SUCCESSFULLY ===");
+            append("The module imports are working correctly.");
+            append("The issue may be in the main.js execution or DOM.");
+
+        } catch (error) {
+            append("\n=== ERROR ===");
+            append("Error: " + error.message);
+            append("Stack: " + error.stack);
+        }
+    </script>
+</body>
+</html>
