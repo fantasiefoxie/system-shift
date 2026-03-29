@@ -19,8 +19,18 @@
         </div>
 
         <div class="halo-stat">
+            <div class="halo-label">Act</div>
+            <div id="actIndicator" class="halo-value"></div>
+        </div>
+
+        <div class="halo-stat">
             <div class="halo-label">Leverage</div>
             <div id="leverageStat" class="halo-value"></div>
+        </div>
+
+        <div class="halo-stat">
+            <div class="halo-label">Plays</div>
+            <div id="playsStat" class="halo-value"></div>
         </div>
 
         <div class="halo-stat">
@@ -31,6 +41,38 @@
         <div class="halo-stat">
             <div class="halo-label">Pushback</div>
             <div id="pushbackStat" class="halo-value"></div>
+        </div>
+    </div>
+
+    <!-- RESOURCES -->
+    <div id="resources">
+        <div class="resource-item resource-political">
+            <span class="resource-label">Political</span>
+            <span id="politicalStat" class="resource-value">5</span>
+            <div class="resource-bar">
+                <div class="resource-fill"></div>
+            </div>
+        </div>
+        <div class="resource-item resource-social">
+            <span class="resource-label">Social</span>
+            <span id="socialStat" class="resource-value">5</span>
+            <div class="resource-bar">
+                <div class="resource-fill"></div>
+            </div>
+        </div>
+        <div class="resource-item resource-momentum">
+            <span class="resource-label">Momentum</span>
+            <span id="momentumStat" class="resource-value">0</span>
+            <div class="resource-bar">
+                <div class="resource-fill"></div>
+            </div>
+        </div>
+        <div class="resource-item resource-infrastructure">
+            <span class="resource-label">Infrastructure</span>
+            <span id="infrastructureStat" class="resource-value">0</span>
+            <div class="resource-bar">
+                <div class="resource-fill"></div>
+            </div>
         </div>
     </div>
 
@@ -90,10 +132,22 @@
 
 <audio id="bgCalm" src="./assets/audio/calm.mp3" preload="auto"></audio>
 <audio id="bgTension" src="./assets/audio/tension.mpeg" preload="auto"></audio>
-<audio id="bgCollapse" src="./assets/audio/collapse.mp3" preload="auto"></audio>
-<audio id="sfxLowCapital" src="./assets/audio/lowtension.mp3" preload="auto"></audio>
+<audio id="bgCollapse" src="./assets/audio/collapse.mp3.mpeg" preload="auto"></audio>
+<audio id="sfxLowCapital" src="./assets/audio/lowtension.mp3.mpeg" preload="auto"></audio>
 
-<script type="module" src="main.js?v=3"></script>
-
+<script type="module" src="main.js?v=6"></script>
+<script>
+    // Error handling for module loading
+    window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error);
+        const app = document.getElementById('app');
+        if (app) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position:fixed;top:10px;right:10px;background:#ef4444;color:white;padding:20px;border-radius:8px;z-index:9999;max-width:400px;';
+            errorDiv.innerHTML = '<strong>JavaScript Error:</strong><br>' + (e.error?.message || e.message || 'Unknown error');
+            app.appendChild(errorDiv);
+        }
+    });
+</script>
 </body>
 </html>

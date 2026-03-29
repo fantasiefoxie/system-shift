@@ -1,0 +1,11 @@
+{
+  "name": "system-shift",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "System Shift - A strategic policy game",
+  "main": "main.js",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "test": "echo \"Tests require browser environment\""
+  }
+}

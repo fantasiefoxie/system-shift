@@ -40,6 +40,12 @@ const soundMap = {
     surgeUp: "ascend.mp3",
     surgeBreak: "crack.mp3",
 
+    /* Card Interactions */
+    cardReveal: "card-flip.mp3",
+    combo: "ui-click-one.mp3",
+    synergy: "energy.mp3",
+    counter: "error-glitch.mp3",
+
     /* Endings / Music */
     ecoEnding: "relaxed-scene.mp3",
     ecoNature: "nature-sound.mp3",

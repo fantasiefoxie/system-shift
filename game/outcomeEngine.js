@@ -1,8 +1,10 @@
 /* ================================================= */
-/* SYSTEM SHIFT – OUTCOME ENGINE (v1.1 STABLE)      */
-/* Ideological Structural Classifier                */
-/* Fully Aligned With Phase + Music System          */
+/* SYSTEM SHIFT – OUTCOME ENGINE (v1.2 NARRATIVE)   */
+/* Ideological Structural Classifier                |
+| Enhanced with narrative descriptions             | */
 /* ================================================= */
+
+import { getNarrativeSummary } from "./narrative.js";
 
 export function evaluateOutcome(gameState) {
 

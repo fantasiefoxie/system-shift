@@ -12,6 +12,7 @@ export const gameState = {
     round: 1,
     maxRounds: 10,
     gameOver: false,
+    currentAct: 1,
 
     /* ================================================= */
     /* ACTION ECONOMY                                   */
@@ -73,5 +74,52 @@ export const gameState = {
 
     playerHand: [],
     deck: [],
-    discardPile: []
+    discardPile: [],
+
+    /* ================================================= */
+    /* DELAYED EFFECTS                                  */
+    /* ================================================= */
+
+    delayedEffects: [],
+
+    /* ================================================= */
+    /* MULTI-RESOURCE SYSTEM                            */
+    /* ================================================= */
+
+    resources: {
+        political: 5,
+        social: 5,
+        momentum: 0,
+        infrastructure: 0
+    },
+
+    resourceState: {
+        momentumDecay: true,
+        infrastructureMaintenance: 0,
+        resourceBonuses: {},
+        resourcePenalties: {}
+    },
+
+    /* ================================================= */
+    /* TAG TRACKING                                     */
+    /* ================================================= */
+
+    tagsPlayedThisRound: [],
+
+    /* ================================================= */
+    /* NARRATIVE STATE                                  */
+    /* ================================================= */
+
+    narrative: {
+        storyBeats: [],
+        characterArcs: {},
+        factionRelations: {
+            elite: 0,
+            authoritarian: 0,
+            statusquo: 0
+        },
+        historicalEvents: [],
+        currentNarrative: null,
+        narrativeChoices: []
+    }
 };

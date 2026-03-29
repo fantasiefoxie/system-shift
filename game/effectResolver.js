@@ -1,12 +1,26 @@
 /* ================================================= */
-/* SYSTEM SHIFT – EFFECT RESOLVER (v5 FINAL STABLE) */
-/* Sequential Card Resolution + Tension Scaling     */
+/* SYSTEM SHIFT – EFFECT RESOLVER (v6 INTERACTION)  */
+/* Sequential Card Resolution + Card Interactions   */
 /* Fully Hardened + Safe                            */
 /* ================================================= */
 
 import { gameState } from "./state.js";
 import { playCard } from "./round.js";
 import { playSound } from "./audioManager.js";
+import { 
+    getResource, 
+    consumeResource, 
+    addResource, 
+    applyOpportunityCosts, 
+    applyBurnMechanics, 
+    setupDelayedEffect 
+} from "./resourceManagement.js";
+import { 
+    processCardInteractions, 
+    applyAllInteractions,
+    revealHiddenCard,
+    addHiddenCards
+} from "./cardInteractions.js";
 
 let resolving = false;
 
@@ -31,6 +45,19 @@ export async function resolveCard(index, renderFn) {
 
         const card = gameState.playerHand[index];
         if (!card) return;
+
+        // Handle hidden card reveal
+        if (card.hidden) {
+            const revealedCard = revealHiddenCard(index);
+            if (!revealedCard) return;
+            
+            // Update hand with revealed card
+            gameState.playerHand[index] = revealedCard;
+            card.cost = revealedCard.revealCost || revealedCard.cost;
+            
+            playSound("cardReveal");
+            await delay(150);
+        }
 
         const effects = { ...card.effects };
         const cost = Number(card.cost) || 0;
@@ -74,6 +101,33 @@ export async function resolveCard(index, renderFn) {
 
         playCard(index);
 
+        /* --------------------------------------------- */
+        /* 3. Process Card Interactions                 */
+        /* --------------------------------------------- */
+
+        const interactions = processCardInteractions(card);
+        
+        // Apply combo bonuses
+        interactions.combos.forEach(combo => {
+            playSound("combo");
+            triggerInteractionFeedback(combo.name, "combo");
+        });
+        
+        // Apply synergy bonuses
+        interactions.synergies.forEach(synergy => {
+            playSound("synergy");
+            triggerInteractionFeedback(synergy.name, "synergy");
+        });
+        
+        // Apply counter penalties
+        interactions.counters.forEach(counter => {
+            playSound("counter");
+            triggerInteractionFeedback(counter.name, "counter");
+        });
+
+        // Apply all interaction effects
+        applyAllInteractions(interactions);
+
         if (typeof renderFn === "function") {
             renderFn();
         }
@@ -81,7 +135,7 @@ export async function resolveCard(index, renderFn) {
         await delay(70);
 
         /* --------------------------------------------- */
-        /* 3. Animate Effects Sequentially              */
+        /* 4. Animate Effects Sequentially              */
         /* --------------------------------------------- */
 
         for (let key in effects) {
@@ -96,7 +150,7 @@ export async function resolveCard(index, renderFn) {
         }
 
         /* --------------------------------------------- */
-        /* 4. Structural Surge Bonus                    */
+        /* 5. Structural Surge Bonus                    */
         /* --------------------------------------------- */
 
         if (card.suit === "authority" || card.suit === "solidarity") {
@@ -105,7 +159,16 @@ export async function resolveCard(index, renderFn) {
         }
 
         /* --------------------------------------------- */
-        /* 5. Final Resolve Impact                      */
+        /* 6. Hidden Card Management                    */
+        /* --------------------------------------------- */
+
+        // Add hidden cards if hand is empty after playing
+        if (gameState.playerHand.length === 0) {
+            addHiddenCards();
+        }
+
+        /* --------------------------------------------- */
+        /* 7. Final Resolve Impact                      */
         /* --------------------------------------------- */
 
         if (dramatic) {
@@ -182,5 +245,26 @@ function triggerTopBarAnimation(stat, positive) {
 
     if (stat === "pushback") {
         playSound("shutter");
+    }
+}
+
+function triggerInteractionFeedback(name, type) {
+    // Visual feedback for interactions
+    const overlay = document.createElement("div");
+    overlay.className = `interaction-overlay ${type}`;
+    overlay.textContent = name;
+    
+    const app = document.getElementById("app");
+    if (app) {
+        app.appendChild(overlay);
+        
+        setTimeout(() => {
+            overlay.classList.add("fade-out");
+            setTimeout(() => {
+                if (overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+            }, 500);
+        }, 1000);
     }
 }

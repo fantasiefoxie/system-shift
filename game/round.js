@@ -6,6 +6,26 @@
 
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
+import { resetInteractionState } from "./cardInteractions.js";
+import { 
+    initResourceSystem, 
+    applyResourceRecovery, 
+    resetResourceState,
+    processDelayedEffects 
+} from "./resourceManagement.js";
+import {
+    initOppositionSystem,
+    calculateThreatLevels,
+    processOppositionResponses,
+    checkEscalation,
+    updateOppositionLearning,
+    resetOppositionState
+} from "./oppositionSystem.js";
+import {
+    initOppositionActions,
+    processOppositionPhase
+} from "./oppositionActions.js";
+import { getCurrentAct } from "./acts.js";
 
 /* Track surge changes within round */
 let surgeDeltaThisRound = 0;
@@ -37,6 +57,25 @@ export function playCard(index) {
         id: card.id,
         cost
     });
+
+    // Track tags played this round
+    if (card.tags) {
+        gameState.tagsPlayedThisRound.push(...card.tags);
+    }
+    
+    // Check for synergies
+    if (card.synergy) {
+        const hasTag = card.synergy.if_played_this_round.some(
+            tag => gameState.tagsPlayedThisRound.includes(tag)
+        );
+        if (hasTag) {
+            applyEffects(card.synergy.bonus);
+            log("SYNERGY_TRIGGERED", { 
+                cardId: card.id, 
+                bonus: card.synergy.bonus 
+            });
+        }
+    }
 
     applyEffects(card.effects || {});
 
@@ -123,6 +162,12 @@ function applyStructuralStrainDrift() {
     const surgeStability = Math.floor(surge / 5);
     strainDelta -= surgeStability;
 
+    // Apply act modifier
+    const currentAct = getCurrentAct(gameState.round);
+    if (currentAct && currentAct.modifiers.strainMultiplier) {
+        strainDelta = Math.round(strainDelta * currentAct.modifiers.strainMultiplier);
+    }
+
     let newStrain = strain + strainDelta;
     newStrain = Math.max(0, Math.min(20, newStrain));
 
@@ -153,6 +198,12 @@ export function endRound() {
     }
 
     gameState.round += 1;
+
+    // Update current act
+    const currentAct = getCurrentAct(gameState.round);
+    if (currentAct) {
+        gameState.currentAct = currentAct.act;
+    }
 
     /* --------------------------------------------- */
     /* 1. LEVERAGE RECOVERY                         */
@@ -269,10 +320,58 @@ export function endRound() {
 
     surgeDeltaThisRound = 0;
 
+    // Apply act surge bonus
+    const actForSurge = getCurrentAct(gameState.round);
+    if (actForSurge && actForSurge.modifiers.surgeBonus) {
+        gameState.surge += actForSurge.modifiers.surgeBonus;
+    }
+
     /* --------------------------------------------- */
-    /* 6. RESET ROUND STATE                         */
+    /* 6. RESOURCE MANAGEMENT                       */
+    /* --------------------------------------------- */
+    
+    // Apply resource recovery based on game state
+    applyResourceRecovery();
+    
+    // Process any delayed effects
+    processDelayedEffects();
+
+    /* --------------------------------------------- */
+    /* 7. RESET ROUND STATE                         */
     /* --------------------------------------------- */
 
     gameState.playsThisRound = 0;
     gameState.playerHand = [];
+    gameState.tagsPlayedThisRound = [];
+    
+    /* --------------------------------------------- */
+    /* 8. RESET CARD INTERACTIONS                   */
+    /* --------------------------------------------- */
+    
+    resetInteractionState();
+    
+    /* --------------------------------------------- */
+    /* 10. OPPOSITION SYSTEM                        */
+    /* --------------------------------------------- */
+    
+    // Calculate threat levels from player actions
+    calculateThreatLevels();
+    
+    // Process opposition responses
+    processOppositionResponses();
+    
+    // Process opposition actions (cards)
+    processOppositionPhase();
+    
+    // Check for escalation
+    checkEscalation();
+    
+    // Update opposition learning
+    updateOppositionLearning();
+
+    /* --------------------------------------------- */
+    /* 11. RESET RESOURCE STATE                     */
+    /* --------------------------------------------- */
+    
+    resetResourceState();
 }
