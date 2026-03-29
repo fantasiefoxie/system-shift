@@ -731,6 +731,81 @@ body {
 }
 
 /* ================================================= */
+/* NEGOTIATION SYSTEM (3C)                          */
+/* ================================================= */
+
+.faction-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.negotiate-btn {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    border-radius: 6px;
+    background: rgba(234, 179, 8, 0.2);
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    color: #facc15;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 500;
+}
+
+.negotiate-btn:hover:not(:disabled) {
+    background: rgba(234, 179, 8, 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(234, 179, 8, 0.3);
+}
+
+.negotiate-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.negotiation-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.negotiation-options button {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.negotiation-options button:hover:not(:disabled) {
+    background: #334155;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.negotiation-options button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.negotiation-result-success {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+}
+
+.negotiation-result-failure {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+/* ================================================= */
 /* DIFFICULTY BUTTONS                               */
 /* ================================================= */
 

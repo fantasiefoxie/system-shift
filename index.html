@@ -124,24 +124,33 @@
     </div>
 </div>
 
-    <!-- FACTION DISPLAY (3A: Scouting) -->
+    <!-- FACTION DISPLAY (3A: Scouting, 3C: Negotiation) -->
     <div id="factionRow" class="faction-row">
         <div class="faction-indicator" data-faction="elite">
             <span class="faction-name">Elite</span>
             <span class="faction-threat" id="eliteThreat"></span>
-            <button class="scout-btn" data-faction="elite">Scout (3⚡)</button>
+            <div class="faction-actions">
+                <button class="scout-btn" data-faction="elite">Scout (3⚡)</button>
+                <button class="negotiate-btn" data-faction="elite">Negotiate</button>
+            </div>
             <span class="scout-tooltip" id="eliteScoutTooltip"></span>
         </div>
         <div class="faction-indicator" data-faction="authoritarian">
             <span class="faction-name">Authoritarian</span>
             <span class="faction-threat" id="authoritarianThreat"></span>
-            <button class="scout-btn" data-faction="authoritarian">Scout (3⚡)</button>
+            <div class="faction-actions">
+                <button class="scout-btn" data-faction="authoritarian">Scout (3⚡)</button>
+                <button class="negotiate-btn" data-faction="authoritarian">Negotiate</button>
+            </div>
             <span class="scout-tooltip" id="authoritarianScoutTooltip"></span>
         </div>
         <div class="faction-indicator" data-faction="statusquo">
             <span class="faction-name">Status Quo</span>
             <span class="faction-threat" id="statusquoThreat"></span>
-            <button class="scout-btn" data-faction="statusquo">Scout (3⚡)</button>
+            <div class="faction-actions">
+                <button class="scout-btn" data-faction="statusquo">Scout (3⚡)</button>
+                <button class="negotiate-btn" data-faction="statusquo">Negotiate</button>
+            </div>
             <span class="scout-tooltip" id="statusquoScoutTooltip"></span>
         </div>
     </div>
@@ -215,6 +224,22 @@
             <button class="tutorial-btn secondary" id="statsResetBtn">Reset Stats</button>
             <button class="tutorial-btn secondary" id="statsCloseBtn">Close</button>
         </div>
+    </div>
+</div>
+
+<!-- ================= NEGOTIATION MODAL (3C) ================= -->
+<div id="negotiationModal" class="tutorial-modal" style="display: none;">
+    <div class="tutorial-content" style="max-width: 450px;">
+        <h3>Negotiate with <span id="negotiationFactionName"></span></h3>
+        <p id="negotiationFactionStatus" style="color: #94a3b8; margin-bottom: 20px;"></p>
+        <p style="margin-bottom: 16px;">Choose your offer strength:</p>
+        <div class="negotiation-options">
+            <button onclick="window.negotiate('low')">Low Offer (2⚡ — 25% success)</button>
+            <button onclick="window.negotiate('medium')">Medium Offer (4⚡ — 50% success)</button>
+            <button onclick="window.negotiate('high')">High Offer (6⚡ — 75% success)</button>
+            <button class="tutorial-btn secondary" onclick="window.closeNegotiationModal()">Cancel</button>
+        </div>
+        <div id="negotiationResult" style="display: none; margin-top: 16px; padding: 12px; border-radius: 8px;"></div>
     </div>
 </div>
 

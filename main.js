@@ -37,6 +37,7 @@ import {
 } from "./game/narrative.js";
 import { scoutFaction, getScoutResult, resetScouting } from "./game/scouting.js";
 import { saveLegacy, getLegacyBonuses, getLegacy, resetLegacy } from "./game/memory.js";
+import { canNegotiate, attemptNegotiation, getNegotiationStatus } from "./game/negotiation.js";
 
 console.log("✓ All modules imported");
 
@@ -104,6 +105,58 @@ document.querySelectorAll('.scout-btn').forEach(btn => {
         } else {
             console.log("Scout failed: insufficient surge");
         }
+    });
+});
+
+// Negotiate button handlers (3C: Negotiation)
+let currentNegotiationFaction = null;
+
+window.openNegotiationModal = function(factionId) {
+    currentNegotiationFaction = factionId;
+    const factionState = gameState.opposition?.factions?.[factionId];
+    const factionNames = { elite: "Elite Interests", authoritarian: "Authoritarian Control", statusquo: "Status Quo" };
+    
+    document.getElementById("negotiationFactionName").textContent = factionNames[factionId] || factionId;
+    document.getElementById("negotiationFactionStatus").textContent = `Current threat level: ${Math.round(factionState?.threatLevel || 0)}`;
+    document.getElementById("negotiationResult").style.display = "none";
+    document.getElementById("negotiationModal").style.display = "flex";
+};
+
+window.negotiate = function(offerStrength) {
+    if (!currentNegotiationFaction) return;
+    
+    const result = attemptNegotiation(currentNegotiationFaction, offerStrength);
+    const resultEl = document.getElementById("negotiationResult");
+    
+    resultEl.textContent = result.message;
+    resultEl.style.display = "block";
+    resultEl.className = result.success ? "negotiation-result-success" : "negotiation-result-failure";
+    
+    // Disable offer buttons
+    document.querySelectorAll('.negotiation-options button').forEach(btn => {
+        if (!btn.classList.contains('secondary')) btn.disabled = true;
+    });
+    
+    // Re-render and close after delay
+    setTimeout(() => {
+        render();
+        window.closeNegotiationModal();
+    }, 1500);
+};
+
+window.closeNegotiationModal = function() {
+    document.getElementById("negotiationModal").style.display = "none";
+    currentNegotiationFaction = null;
+    // Re-enable offer buttons
+    document.querySelectorAll('.negotiation-options button').forEach(btn => {
+        btn.disabled = false;
+    });
+};
+
+document.querySelectorAll('.negotiate-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const factionId = btn.getAttribute('data-faction');
+        window.openNegotiationModal(factionId);
     });
 });
 

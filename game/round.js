@@ -31,6 +31,7 @@ import { updateHiddenTracks } from "./hiddenTracks.js";
 import { checkMemory } from "./memory.js";
 import { checkThresholds } from "./thresholds.js";
 import { clearExpiredScouts } from "./scouting.js";
+import { resetNegotiationForAct } from "./negotiation.js";
 
 /* Track surge changes within round */
 let surgeDeltaThisRound = 0;
@@ -246,7 +247,13 @@ export function endRound() {
     // Update current act
     const currentAct = getCurrentAct(gameState.round);
     if (currentAct) {
+        const previousAct = gameState.currentAct;
         gameState.currentAct = currentAct.act;
+        
+        // Reset negotiation on act transition (3C)
+        if (previousAct !== currentAct.act) {
+            resetNegotiationForAct();
+        }
     }
 
     /* --------------------------------------------- */

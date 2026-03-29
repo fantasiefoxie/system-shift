@@ -165,5 +165,14 @@ export const gameState = {
     /* THRESHOLDS (PART 10)                             */
     /* ================================================= */
 
-    activeThresholds: []
+    activeThresholds: [],
+
+    /* ================================================= */
+    /* NEGOTIATION SYSTEM (3C)                          */
+    /* ================================================= */
+
+    negotiation: {
+        usedThisAct: [],
+        history: []
+    }
 };
