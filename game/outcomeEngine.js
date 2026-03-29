@@ -31,10 +31,10 @@ export function evaluateOutcome(gameState) {
 
     /* ------------------------------------------------- */
     /* 1. SYSTEM COLLAPSE                                */
-    /* High strain + elites still dominant               */
+    /* High strain + elites still dominant (5-15%)      */
     /* ------------------------------------------------- */
 
-    if (stress >= 18 && powerGap <= 5) {
+    if (stress >= 14 && powerGap <= 8) {
         return {
             type: "SYSTEM COLLAPSE",
             message:
@@ -48,10 +48,10 @@ export function evaluateOutcome(gameState) {
 
     /* ------------------------------------------------- */
     /* 2. AUTHORITARIAN CONSOLIDATION                    */
-    /* Elite dominance under high stress                */
+    /* Elite dominance under stress (5-15%)             */
     /* ------------------------------------------------- */
 
-    if (elitePower > socialPower && stress >= 12) {
+    if (elitePower > socialPower && stress >= 8) {
         return {
             type: "AUTHORITARIAN CONSOLIDATION",
             message:
@@ -65,10 +65,10 @@ export function evaluateOutcome(gameState) {
 
     /* ------------------------------------------------- */
     /* 3. ECOLOGICAL TRANSITION                          */
-    /* Climate maxed + social advantage + stable        */
+    /* Climate maxed + social advantage + stable (15-25%) */
     /* ------------------------------------------------- */
 
-    if (ecoScore >= 18 && powerGap > 5 && stress < 16) {
+    if (ecoScore >= 19 && powerGap > 6 && stress < 14) {
         return {
             type: "ECOLOGICAL TRANSITION",
             message:
@@ -82,10 +82,10 @@ export function evaluateOutcome(gameState) {
 
     /* ------------------------------------------------- */
     /* 4. SOCIAL TRANSFORMATION                          */
-    /* Strong redistribution + stable transition        */
+    /* Strong redistribution + stable transition (15-25%) */
     /* ------------------------------------------------- */
 
-    if (socialPower >= 28 && powerGap > 5 && stress < 16) {
+    if (socialPower >= 25 && powerGap > 4 && stress < 16) {
         return {
             type: "SOCIAL TRANSFORMATION",
             message:
@@ -99,10 +99,10 @@ export function evaluateOutcome(gameState) {
 
     /* ------------------------------------------------- */
     /* 5. TURBULENT TRANSFORMATION                       */
-    /* High strain BUT social power wins                */
+    /* High strain BUT social power wins (10-20%)       */
     /* ------------------------------------------------- */
 
-    if (stress >= 15 && powerGap > 0 && socialPower >= 22) {
+    if (stress >= 18 && powerGap > 3 && socialPower >= 26) {
         return {
             type: "TURBULENT TRANSFORMATION",
             message:
@@ -116,10 +116,10 @@ export function evaluateOutcome(gameState) {
 
     /* ------------------------------------------------- */
     /* 6. MANAGED STABILITY                              */
-    /* Moderate everything + low strain                 */
+    /* Moderate everything + low strain (10-20%)        */
     /* ------------------------------------------------- */
 
-    if (stress < 14 && Math.abs(powerGap) <= 14 && care >= 10 && climate >= 10) {
+    if (stress < 12 && Math.abs(powerGap) <= 12 && care >= 8 && climate >= 8) {
         return {
             type: "MANAGED STABILITY",
             message:

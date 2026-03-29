@@ -323,22 +323,24 @@ function simulateGame(gameSeed) {
     const powerGap = socialPower - elitePower;
     
     let outcome;
-    // Balance: Check most restrictive conditions first
-    // SYSTEM COLLAPSE: loosened from strain>=12 to strain>=10
-    if (t.strain >= 10 && powerGap <= 5) outcome = "SYSTEM COLLAPSE";
-    // AUTHORITARIAN CONSOLIDATION: tightened powerGap<=14 to <=12
-    else if (t.strain >= 10 && t.authority >= 8 && t.capital >= 14 && powerGap <= 12) outcome = "AUTHORITARIAN CONSOLIDATION";
-    else if (t.climate <= 8 && socialPower < 25 && t.strain >= 4) outcome = "ECOLOGICAL CONSTRAINT";
-    // MANAGED STABILITY: tightened from strain<14 to <12
-    else if (t.strain < 12 && Math.abs(powerGap) <= 12 && t.care >= 10 && t.climate >= 10) outcome = "MANAGED STABILITY";
-    // ECOLOGICAL TRANSITION: tightened from climate>=18 to >=19
-    else if (t.climate >= 19 && powerGap > 5 && t.strain < 14) outcome = "ECOLOGICAL TRANSITION";
-    // SOCIAL TRANSFORMATION: kept at socialPower>=24
-    else if (socialPower >= 24 && powerGap > 3 && t.strain < 16) outcome = "SOCIAL TRANSFORMATION";
-    // DUAL POWER: loosened solidarity>=18 to >=16, authority<=5 to <=6
-    else if (state.activeThresholds.includes("dual_power") || (t.solidarity >= 16 && t.authority <= 6)) outcome = "DUAL POWER TRANSITION";
-    // TURBULENT TRANSFORMATION: tightened from socialPower>=30 to >=32, added strain>=18
-    else if (t.strain >= 18 && powerGap > 5 && socialPower >= 32) outcome = "TURBULENT TRANSFORMATION";
+    // Match target distribution bands (15-25%, 10-20%, 5-15%)
+    // SYSTEM COLLAPSE: High strain + elites still dominant (target: 5-15%)
+    if (t.strain >= 14 && powerGap <= 8) outcome = "SYSTEM COLLAPSE";
+    // AUTHORITARIAN CONSOLIDATION: Elite dominance under stress (target: 5-15%)
+    else if (elitePower > socialPower && t.strain >= 8) outcome = "AUTHORITARIAN CONSOLIDATION";
+    // ECOLOGICAL TRANSITION: Climate maxed + social advantage + stable (target: 15-25%)
+    else if (t.climate >= 19 && powerGap > 6 && t.strain < 14) outcome = "ECOLOGICAL TRANSITION";
+    // SOCIAL TRANSFORMATION: Strong redistribution + stable transition (target: 15-25%)
+    else if (socialPower >= 25 && powerGap > 4 && t.strain < 16) outcome = "SOCIAL TRANSFORMATION";
+    // TURBULENT TRANSFORMATION: High strain BUT social power wins (target: 10-20%)
+    else if (t.strain >= 18 && powerGap > 3 && socialPower >= 26) outcome = "TURBULENT TRANSFORMATION";
+    // MANAGED STABILITY: Moderate everything + low strain (target: 10-20%)
+    else if (t.strain < 12 && Math.abs(powerGap) <= 12 && t.care >= 8 && t.climate >= 8) outcome = "MANAGED STABILITY";
+    // ECOLOGICAL CONSTRAINT: Climate crisis without social power to respond
+    else if (t.climate <= 5 && socialPower < 20 && t.strain >= 10) outcome = "ECOLOGICAL CONSTRAINT";
+    // DUAL POWER TRANSITION: Threshold-based ending
+    else if (state.activeThresholds.includes("dual_power")) outcome = "DUAL POWER TRANSITION";
+    // Fallback: SYSTEM DRIFT (target: 10-20%)
     else outcome = "SYSTEM DRIFT";
     
     return { outcome, tracks: t, pushback: state.pushback.value, surge: state.surge, cardLog };

@@ -110,10 +110,14 @@ export function playCard(index) {
     gameState.memory.maxClimate = Math.max(gameState.memory.maxClimate, gameState.tracks.climate);
 
     // Track played card for Library (1C)
-    const playedCards = JSON.parse(localStorage.getItem("systemshift_played_cards") || "[]");
-    if (!playedCards.includes(card.id)) {
-        playedCards.push(card.id);
-        localStorage.setItem("systemshift_played_cards", JSON.stringify(playedCards));
+    try {
+        const playedCards = JSON.parse(localStorage.getItem("systemshift_played_cards") || "[]");
+        if (!playedCards.includes(card.id)) {
+            playedCards.push(card.id);
+            localStorage.setItem("systemshift_played_cards", JSON.stringify(playedCards));
+        }
+    } catch (e) {
+        console.warn("Failed to track played card:", e);
     }
 
     gameState.discardPile.push(card);

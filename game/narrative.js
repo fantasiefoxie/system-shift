@@ -403,7 +403,11 @@ export function checkNarrativeTriggers() {
 }
 
 export function saveNarrativeState() {
-    localStorage.setItem('systemShiftNarrative', JSON.stringify(narrativeState));
+    try {
+        localStorage.setItem('systemShiftNarrative', JSON.stringify(narrativeState));
+    } catch (e) {
+        console.warn("Failed to save narrative state:", e);
+    }
 }
 
 export function getNarrativeSummary() {

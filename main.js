@@ -38,7 +38,7 @@ import {
 import { scoutFaction, getScoutResult, resetScouting } from "./game/scouting.js";
 import { saveLegacy, getLegacyBonuses, getLegacy, resetLegacy } from "./game/memory.js";
 import { canNegotiate, attemptNegotiation, getNegotiationStatus } from "./game/negotiation.js";
-import { checkAchievements, getUnlocks } from "./game/achievements.js";
+import { checkAchievements, getUnlocks, achievements } from "./game/achievements.js";
 
 console.log("✓ All modules imported");
 
@@ -248,42 +248,46 @@ function getDefaultStats() {
 }
 
 function recordGameStats(endingType) {
-    const stats = JSON.parse(localStorage.getItem("systemshift_stats") || JSON.stringify(getDefaultStats()));
-    
-    stats.games++;
-    const isWin = !["SYSTEM COLLAPSE", "AUTHORITARIAN CONSOLIDATION"].includes(endingType);
-    if (isWin) {
-        stats.wins++;
-        // Track hard wins for achievements
-        if (gameState.difficulty?.mode === "hard") {
-            stats.hardWins = (stats.hardWins || 0) + 1;
+    try {
+        const stats = JSON.parse(localStorage.getItem("systemshift_stats") || JSON.stringify(getDefaultStats()));
+        
+        stats.games++;
+        const isWin = !["SYSTEM COLLAPSE", "AUTHORITARIAN CONSOLIDATION"].includes(endingType);
+        if (isWin) {
+            stats.wins++;
+            // Track hard wins for achievements
+            if (gameState.difficulty?.mode === "hard") {
+                stats.hardWins = (stats.hardWins || 0) + 1;
+            }
         }
+        
+        stats.endingCounts[endingType] = (stats.endingCounts[endingType] || 0) + 1;
+        
+        // Running average for track values
+        const t = gameState.tracks;
+        const n = stats.games;
+        ["care", "climate", "solidarity", "authority", "capital", "strain"].forEach(k => {
+            stats.avgTrackValues[k] = ((stats.avgTrackValues[k] * (n-1)) + t[k]) / n;
+        });
+        
+        // Card play counts from memory
+        gameState.memory.cardsPlayed.forEach(c => {
+            stats.cardPlayCounts[c.id] = (stats.cardPlayCounts[c.id] || 0) + 1;
+        });
+        
+        // Fastest/longest
+        const rounds = gameState.round;
+        if (isWin && (stats.fastestWin === null || rounds < stats.fastestWin)) {
+            stats.fastestWin = rounds;
+        }
+        if (stats.longestGame === null || rounds > stats.longestGame) {
+            stats.longestGame = rounds;
+        }
+        
+        localStorage.setItem("systemshift_stats", JSON.stringify(stats));
+    } catch (e) {
+        console.warn("Failed to record game stats:", e);
     }
-    
-    stats.endingCounts[endingType] = (stats.endingCounts[endingType] || 0) + 1;
-    
-    // Running average for track values
-    const t = gameState.tracks;
-    const n = stats.games;
-    ["care", "climate", "solidarity", "authority", "capital", "strain"].forEach(k => {
-        stats.avgTrackValues[k] = ((stats.avgTrackValues[k] * (n-1)) + t[k]) / n;
-    });
-    
-    // Card play counts from memory
-    gameState.memory.cardsPlayed.forEach(c => {
-        stats.cardPlayCounts[c.id] = (stats.cardPlayCounts[c.id] || 0) + 1;
-    });
-    
-    // Fastest/longest
-    const rounds = gameState.round;
-    if (isWin && (stats.fastestWin === null || rounds < stats.fastestWin)) {
-        stats.fastestWin = rounds;
-    }
-    if (stats.longestGame === null || rounds > stats.longestGame) {
-        stats.longestGame = rounds;
-    }
-    
-    localStorage.setItem("systemshift_stats", JSON.stringify(stats));
 }
 
 function renderStats() {
@@ -811,19 +815,6 @@ window.markTutorialComplete = markTutorialComplete;
 
 function renderAchievements() {
     const unlocks = getUnlocks();
-    const stats = JSON.parse(localStorage.getItem("systemshift_stats") || "{}");
-    const achievements = [
-        { id: "first_win", name: "First Steps", desc: "Win your first game" },
-        { id: "five_wins", name: "Veteran", desc: "Win 5 games" },
-        { id: "transformation", name: "True Transformation", desc: "Achieve Social Transformation" },
-        { id: "ecological", name: "Green Future", desc: "Achieve Ecological Transition" },
-        { id: "dual_power", name: "Dual Power", desc: "Achieve Dual Power Transition" },
-        { id: "all_endings", name: "Historian", desc: "Reach all 7 ending types" },
-        { id: "speedrun", name: "Swift Movement", desc: "Win in 7 rounds or fewer" },
-        { id: "ten_games", name: "Committed", desc: "Play 10 games" },
-        { id: "hard_win", name: "Against All Odds", desc: "Win on Hard difficulty" },
-        { id: "negotiator", name: "Diplomat", desc: "Successfully negotiate 5 times" }
-    ];
     
     let html = '<div class="achievement-grid">';
     achievements.forEach(ach => {

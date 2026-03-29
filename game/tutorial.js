@@ -143,8 +143,12 @@ export function initTutorial() {
     // Check if user has completed tutorial before
     const savedTutorial = localStorage.getItem('systemShiftTutorial');
     if (savedTutorial) {
-        const saved = JSON.parse(savedTutorial);
-        Object.assign(tutorialState, saved);
+        try {
+            const saved = JSON.parse(savedTutorial);
+            Object.assign(tutorialState, saved);
+        } catch (e) {
+            console.warn("Failed to parse tutorial state:", e);
+        }
     }
     
     // Show welcome message for new users

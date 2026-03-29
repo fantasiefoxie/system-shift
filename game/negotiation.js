@@ -101,6 +101,15 @@ export function attemptNegotiation(factionId, offerStrength) {
             offerStrength
         });
         
+        // Track stat for Diplomat achievement
+        try {
+            const stats = JSON.parse(localStorage.getItem("systemshift_stats") || "{}");
+            stats.successfulNegotiations = (stats.successfulNegotiations || 0) + 1;
+            localStorage.setItem("systemshift_stats", JSON.stringify(stats));
+        } catch (e) {
+            console.warn("Failed to update negotiation stat:", e);
+        }
+        
         return { success: true, factionId, offerStrength, message };
     } else {
         // Increase threat on failure

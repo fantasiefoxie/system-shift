@@ -122,7 +122,7 @@ function applyThresholdEffect(threshold) {
             // Unlock radical cards
             break;
         case "strain_reduction":
-            gameState.tracks.strain += threshold.value;
+            gameState.tracks.strain = Math.max(0, Math.min(20, gameState.tracks.strain + threshold.value));
             break;
         case "new_ending":
             // New ending accessible
