@@ -35,6 +35,7 @@ import {
     getTrackNarrative,
     getCardFlavor
 } from "./game/narrative.js";
+import { scoutFaction, getScoutResult, resetScouting } from "./game/scouting.js";
 
 console.log("✓ All modules imported");
 
@@ -76,6 +77,34 @@ const trackElements = {
     capital: document.getElementById("track-capital"),
     strain: document.getElementById("track-strain")
 };
+
+// Faction display elements (3A: Scouting)
+const factionElements = {
+    elite: {
+        threat: document.getElementById("eliteThreat"),
+        tooltip: document.getElementById("eliteScoutTooltip")
+    },
+    authoritarian: {
+        threat: document.getElementById("authoritarianThreat"),
+        tooltip: document.getElementById("authoritarianScoutTooltip")
+    },
+    statusquo: {
+        threat: document.getElementById("statusquoThreat"),
+        tooltip: document.getElementById("statusquoScoutTooltip")
+    }
+};
+
+// Scout button handlers (3A: Scouting)
+document.querySelectorAll('.scout-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const factionId = btn.getAttribute('data-faction');
+        if (scoutFaction(factionId)) {
+            render();
+        } else {
+            console.log("Scout failed: insufficient surge");
+        }
+    });
+});
 
 console.log("✓ DOM references obtained");
 
@@ -385,6 +414,7 @@ function render() {
     console.log("Rendering...");
     updateStats();
     renderTracksSequenced();
+    renderFactions();
     renderHand();
     checkSystemPhases();
     
@@ -398,6 +428,43 @@ function render() {
     
     // Check narrative triggers
     checkNarrativeTriggers();
+}
+
+function renderFactions() {
+    const factions = ['elite', 'authoritarian', 'statusquo'];
+    
+    factions.forEach(factionId => {
+        const factionState = gameState.opposition?.factions?.[factionId];
+        const elements = factionElements[factionId];
+        
+        if (!factionState || !elements) return;
+        
+        // Update threat level display
+        if (elements.threat) {
+            const threat = Math.round(factionState.threatLevel);
+            const active = factionState.active;
+            elements.threat.textContent = active ? `⚠ ${threat}` : threat;
+            elements.threat.className = `faction-threat ${active ? 'faction-active' : ''}`;
+        }
+        
+        // Update scout tooltip
+        if (elements.tooltip) {
+            const scoutResult = getScoutResult(factionId);
+            if (scoutResult) {
+                elements.tooltip.textContent = scoutResult;
+                elements.tooltip.className = 'scout-tooltip scout-tooltip-visible';
+            } else {
+                elements.tooltip.textContent = '';
+                elements.tooltip.className = 'scout-tooltip';
+            }
+        }
+        
+        // Update scout button disabled state
+        const btn = document.querySelector(`.scout-btn[data-faction="${factionId}"]`);
+        if (btn) {
+            btn.disabled = gameState.surge < 3;
+        }
+    });
 }
 
 /* ================================================= */

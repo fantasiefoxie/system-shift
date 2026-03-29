@@ -30,6 +30,7 @@ import { addCardToDeck, removeCardFromDeck, removeCardsByTag } from "./deck.js";
 import { updateHiddenTracks } from "./hiddenTracks.js";
 import { checkMemory } from "./memory.js";
 import { checkThresholds } from "./thresholds.js";
+import { clearExpiredScouts } from "./scouting.js";
 
 /* Track surge changes within round */
 let surgeDeltaThisRound = 0;
@@ -238,6 +239,9 @@ export function endRound() {
     }
 
     gameState.round += 1;
+
+    // Clear expired scouts at start of new round (3A)
+    clearExpiredScouts();
 
     // Update current act
     const currentAct = getCurrentAct(gameState.round);

@@ -609,6 +609,108 @@ body {
 }
 
 /* ================================================= */
+/* FACTION DISPLAY & SCOUTING (3A)                  */
+/* ================================================= */
+
+.faction-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 12px 0;
+    flex-wrap: wrap;
+}
+
+.faction-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    position: relative;
+}
+
+.faction-name {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.faction-threat {
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+}
+
+.faction-threat.faction-active {
+    color: #f59e0b;
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.scout-btn {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    border-radius: 6px;
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 500;
+}
+
+.scout-btn:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.scout-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.scout-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    border: 1px solid #f59e0b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: #fde68a;
+    white-space: nowrap;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    margin-bottom: 8px;
+}
+
+.scout-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #f59e0b;
+}
+
+.scout-tooltip-visible {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+/* ================================================= */
 /* DIFFICULTY BUTTONS                               */
 /* ================================================= */
 
