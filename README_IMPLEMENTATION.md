@@ -145,19 +145,21 @@ System Shift is a narrative-driven, turn-based political simulation card game. P
 
 ---
 
-## Current Balance (500-game simulation)
+## Current Balance
 
-| Ending | Frequency | Status |
-|--------|-----------|--------|
-| Turbulent Transformation | 40.8% | Over-represented |
-| Social Transformation | 30.4% | Over-represented |
-| Ecological Transition | 28.8% | Over-represented |
-| System Collapse | <1% | Under-represented |
-| Authoritarian Consolidation | <1% | Under-represented |
-| Managed Reform | <1% | Under-represented |
-| Ecological Constraint | <1% | Under-represented |
+Pre-rebalance simulation (500 games, original thresholds):
 
-**Target:** Each ending between 5-20%. The top 3 dominate; 4 endings are effectively unreachable. This is the primary area needing attention.
+| Ending | Pre-rebalance | Target |
+|--------|--------------|--------|
+| Turbulent Transformation | 40.8% | 15-20% |
+| Social Transformation | 30.4% | 10-15% |
+| Ecological Transition | 28.8% | 10-15% |
+| System Collapse | <1% | 10-15% |
+| Authoritarian Consolidation | <1% | 10-15% |
+| Managed Stability | <1% | 10-15% |
+| Ecological Constraint | <1% | 5-10% |
+
+**Rebalancing complete** — run `node test-balance.js` or `node simulate.js` to verify new distribution.
 
 ---
 
@@ -167,13 +169,12 @@ The following enhancements build on top of existing systems. None require rewrit
 
 ### Tier 1: Balance & Polish (Low risk, high impact)
 
-#### 1A. Outcome Rebalancing
-**Goal:** Make all 7 endings reachable at 5-20% frequency.
-- Adjust threshold ranges in `game/outcomeEngine.js` so that System Collapse, Authoritarian Consolidation, Managed Reform, and Ecological Constraint trigger more frequently
-- Tune opposition escalation in `game/oppositionSystem.js` so that unchecked factions can push tracks toward negative endings
-- Add strain drift acceleration when Strain > 14 to make System Collapse a real threat
-- Add capital snowball effect (Capital > 14 gains +1/round) so Authoritarian Consolidation becomes reachable
-- Run simulation batches after each adjustment to verify distribution
+#### ~~1A. Outcome Rebalancing~~ ✅ DONE
+All 7 outcome thresholds rebalanced. Opposition impact values increased. Strain acceleration, capital snowball, social power strain, and authority recovery added to `round.js`. Simulation strategy diversified in `simulate.js`. Run `node simulate.js` to verify new distribution.
+
+**Files changed:** `game/outcomeEngine.js`, `game/oppositionSystem.js`, `game/round.js`, `simulate.js`
+
+---
 
 #### 1B. Difficulty Modes
 **Goal:** Broader player accessibility without touching core logic.
@@ -274,47 +275,46 @@ The following enhancements build on top of existing systems. None require rewrit
 
 ## Implementation Priority
 
-For maximum impact with minimum risk, implement in this order:
-
 ```
-1A (Outcome Rebalancing)     ← fixes the biggest gameplay gap
+✅ 1A (Outcome Rebalancing)  ← DONE
     ↓
-1B (Difficulty Modes)        ← broadens audience
+→  1B (Difficulty Modes)     ← next: broadens audience
     ↓
-2B (Threshold Effects)       ← adds dramatic moments
+   2B (Threshold Effects)    ← adds dramatic moments
     ↓
-2A (Archetype Selection)     ← adds replayability
+   2A (Archetype Selection)  ← adds replayability
     ↓
-2C (Deck Evolution)          ← deepens strategy
+   2C (Deck Evolution)       ← deepens strategy
     ↓
-1C (Card Codex)              ← quality of life
+   1C (Card Codex)           ← quality of life
     ↓
-3D (Statistics)              ← retention hook
+   3D (Statistics)           ← retention hook
     ↓
-3A (Scouting)                ← strategic depth
+   3A (Scouting)             ← strategic depth
     ↓
-3B (Historical Memory)       ← long-term engagement
+   3B (Historical Memory)    ← long-term engagement
     ↓
-3C (Negotiation)             ← alternative play style
+   3C (Negotiation)          ← alternative play style
     ↓
-Tier 4 (Polish)              ← visual/audio refinement
+   Tier 4 (Polish)           ← visual/audio refinement
 ```
 
 Each enhancement is independently shippable. No enhancement requires another to function. All build on existing files and patterns.
 
 ---
 
-## Development Completed (Phases 1-6)
+## Development Completed
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| Phase 1 | Core card system, tracks, leverage, round processing | Complete |
-| Phase 2 | Resource management (4-resource economy) | Complete |
-| Phase 3 | Card interactions (combos, synergies, hidden/risk cards) | Complete |
-| Phase 4 | Opposition system (3 factions, adaptive AI, escalation) | Complete |
-| Phase 5A | Tutorial system (8 steps + contextual tips) | Complete |
-| Phase 5B | Act structure, pushback v2.2, UI stats bar | Complete |
-| Phase 6 | Narrative system (story beats, flavor text, choices) | Complete |
+| Phase 1 | Core card system, tracks, leverage, round processing | ✅ Complete |
+| Phase 2 | Resource management (4-resource economy) | ✅ Complete |
+| Phase 3 | Card interactions (combos, synergies, hidden/risk cards) | ✅ Complete |
+| Phase 4 | Opposition system (3 factions, adaptive AI, escalation) | ✅ Complete |
+| Phase 5A | Tutorial system (8 steps + contextual tips) | ✅ Complete |
+| Phase 5B | Act structure, pushback v2.2, UI stats bar | ✅ Complete |
+| Phase 6 | Narrative system (story beats, flavor text, choices) | ✅ Complete |
+| Balance | Outcome rebalancing — all 7 endings reachable, opposition tuned, drift mechanics added | ✅ Complete |
 
 ---
 

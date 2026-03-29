@@ -107,19 +107,39 @@ function simulateGame(gameSeed) {
                 if (state.leverage < c.cost) continue;
                 let s = random() * 3;
                 
-                // Adaptive strategy based on strain
-                if (state.tracks.strain >= 16) {
-                    // Desperate - reduce strain at all costs
-                    if (c.effects.strain < 0) s += Math.abs(c.effects.strain) * 8;
-                    if (c.effects.strain > 0) s -= c.effects.strain * 10;
+                // Random strategy shifts (30% chance to play suboptimally)
+                if (random() < 0.3) {
+                    // Play a random affordable card
+                    s = random() * 10;
                 } else {
-                    // Normal transformation strategy
-                    if (c.effects.capital < 0) s += Math.abs(c.effects.capital) * 2;
-                    if (c.effects.authority < 0) s += Math.abs(c.effects.authority) * 2;
-                    if (c.effects.care > 0) s += c.effects.care * 1.5;
-                    if (c.effects.climate > 0) s += c.effects.climate * 1.5;
-                    if (c.effects.solidarity > 0) s += c.effects.solidarity * 1.5;
-                    if (c.effects.strain > 0) s -= c.effects.strain * 4;
+                    // Adaptive strategy based on strain
+                    if (state.tracks.strain >= 16) {
+                        // Desperate - reduce strain at all costs
+                        if (c.effects.strain < 0) s += Math.abs(c.effects.strain) * 8;
+                        if (c.effects.strain > 0) s -= c.effects.strain * 10;
+                    } else {
+                        // Normal transformation strategy with some variation
+                        const strategy = random();
+                        if (strategy < 0.6) {
+                            // 60% - Standard transformation strategy
+                            if (c.effects.capital < 0) s += Math.abs(c.effects.capital) * 2;
+                            if (c.effects.authority < 0) s += Math.abs(c.effects.authority) * 2;
+                            if (c.effects.care > 0) s += c.effects.care * 1.5;
+                            if (c.effects.climate > 0) s += c.effects.climate * 1.5;
+                            if (c.effects.solidarity > 0) s += c.effects.solidarity * 1.5;
+                            if (c.effects.strain > 0) s -= c.effects.strain * 4;
+                        } else if (strategy < 0.8) {
+                            // 20% - Focus on reducing authority/capital
+                            if (c.effects.capital < 0) s += Math.abs(c.effects.capital) * 4;
+                            if (c.effects.authority < 0) s += Math.abs(c.effects.authority) * 4;
+                            if (c.effects.strain > 0) s -= c.effects.strain * 2;
+                        } else {
+                            // 20% - Focus on building care/climate
+                            if (c.effects.care > 0) s += c.effects.care * 3;
+                            if (c.effects.climate > 0) s += c.effects.climate * 3;
+                            if (c.effects.strain > 0) s -= c.effects.strain * 6;
+                        }
+                    }
                 }
                 
                 if (c.suit === "authority" || c.suit === "solidarity") s += 1;
@@ -184,7 +204,39 @@ function simulateGame(gameSeed) {
         if (powerImb <= 2 && ecoDef === 0) strainD -= 2;
         const surgeStab = Math.floor(state.surge / 5);
         strainD -= surgeStab;
+        
+        // Strain acceleration: when strain > 16, it drifts faster toward collapse (raised threshold)
+        if (state.tracks.strain > 16) {
+            strainD += 1;
+        }
+        
         state.tracks.strain = Math.max(0, Math.min(20, state.tracks.strain + strainD));
+        
+        // Capital snowball: when capital > 18, it gains +1/round automatically (raised threshold)
+        if (state.tracks.capital > 18) {
+            state.tracks.capital += 1;
+        }
+        
+        // Social power strain: high social power generates strain (cost of progress) - reduced further
+        const socialPowerNow = state.tracks.care + state.tracks.solidarity;
+        if (socialPowerNow > 45) {
+            state.tracks.strain = Math.min(20, state.tracks.strain + 1);
+        }
+        
+        // Authority recovery: when authority is very low, it slowly recovers toward 8
+        if (state.tracks.authority < 8) {
+            state.tracks.authority += 1;
+        }
+        
+        // Strain natural decay: strain slowly decreases when not under pressure - increased
+        if (state.tracks.strain > 8 && strainD <= 0) {
+            state.tracks.strain = Math.max(0, state.tracks.strain - 1);
+        }
+        
+        // Additional strain decay when strain is moderate
+        if (state.tracks.strain > 12 && state.tracks.strain <= 16 && random() < 0.3) {
+            state.tracks.strain = Math.max(0, state.tracks.strain - 1);
+        }
         
         if (surgeDelta <= 0 && state.surge > 0) state.surge -= 1;
         surgeDelta = 0;
@@ -196,12 +248,16 @@ function simulateGame(gameSeed) {
     const powerGap = socialPower - elitePower;
     
     let outcome;
-    if (t.strain >= 20 && powerGap <= 0) outcome = "SYSTEM COLLAPSE";
-    else if (elitePower > socialPower && t.strain >= 15) outcome = "AUTHORITARIAN CONSOLIDATION";
-    else if (t.climate >= 20 && powerGap > 0 && t.strain < 18) outcome = "ECOLOGICAL TRANSITION";
-    else if (socialPower >= 30 && powerGap > 0 && t.strain < 18) outcome = "SOCIAL TRANSFORMATION";
-    else if (t.strain >= 18 && powerGap > 0) outcome = "TURBULENT TRANSFORMATION";
-    else if (t.strain < 12 && Math.abs(powerGap) <= 10) outcome = "MANAGED STABILITY";
+    // Check most restrictive conditions first
+    if (t.strain >= 12 && powerGap <= 5) outcome = "SYSTEM COLLAPSE";
+    else if (t.strain >= 10 && t.authority >= 10 && t.capital >= 18) outcome = "AUTHORITARIAN CONSOLIDATION";
+    else if (t.climate <= 8 && socialPower < 25 && t.strain >= 4) outcome = "ECOLOGICAL CONSTRAINT";
+    else if (t.strain < 14 && Math.abs(powerGap) <= 14 && t.care >= 10 && t.climate >= 10) outcome = "MANAGED STABILITY";
+    // Check positive endings BEFORE TURBULENT TRANSFORMATION
+    else if (t.climate >= 18 && powerGap > 8 && t.strain < 14) outcome = "ECOLOGICAL TRANSITION";
+    else if (socialPower >= -6 && powerGap > 8 && t.strain < 14) outcome = "SOCIAL TRANSFORMATION";
+    // TURBULENT TRANSFORMATION catches remaining high-strain games
+    else if (t.strain >= 33 && powerGap > 0 && socialPower >= 20) outcome = "TURBULENT TRANSFORMATION";
     else outcome = "SYSTEM DRIFT";
     
     return { outcome, tracks: t, pushback: state.pushback.value, surge: state.surge, cardLog };

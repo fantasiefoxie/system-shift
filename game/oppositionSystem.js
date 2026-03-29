@@ -310,44 +310,44 @@ function applyOppositionResponse(responseType, faction) {
 
     switch (responseType) {
         case "capital_boost":
-            gameState.tracks.capital += 2;
-            impact = 1.5;
+            gameState.tracks.capital += 3;
+            impact = 2.0;
             break;
         
         case "social_drain":
-            gameState.resources.social = Math.max(0, gameState.resources.social - 1);
-            impact = 1.0;
-            break;
-        
-        case "infrastructure_tax":
-            gameState.resources.infrastructure = Math.max(0, gameState.resources.infrastructure - 1);
-            impact = 1.2;
-            break;
-        
-        case "authority_boost":
-            gameState.tracks.authority += 2;
+            gameState.resources.social = Math.max(0, gameState.resources.social - 2);
             impact = 1.5;
             break;
         
+        case "infrastructure_tax":
+            gameState.resources.infrastructure = Math.max(0, gameState.resources.infrastructure - 2);
+            impact = 1.8;
+            break;
+        
+        case "authority_boost":
+            gameState.tracks.authority += 3;
+            impact = 2.0;
+            break;
+        
         case "momentum_drain":
-            gameState.resources.momentum = Math.max(0, gameState.resources.momentum - 2);
-            impact = 1.0;
+            gameState.resources.momentum = Math.max(0, gameState.resources.momentum - 3);
+            impact = 1.5;
             break;
         
         case "strain_increase":
-            gameState.tracks.strain += 1;
-            impact = 1.3;
+            gameState.tracks.strain += 2;
+            impact = 1.8;
             break;
         
         case "infrastructure_decay":
-            gameState.resources.infrastructure = Math.max(0, gameState.resources.infrastructure - 1);
-            impact = 0.8;
+            gameState.resources.infrastructure = Math.max(0, gameState.resources.infrastructure - 2);
+            impact = 1.2;
             break;
         
         case "recovery_slow":
             // Reduce resource recovery next round
-            gameState.resourceState.recoveryPenalty = 1;
-            impact = 0.9;
+            gameState.resourceState.recoveryPenalty = 2;
+            impact = 1.4;
             break;
     }
 

@@ -34,7 +34,7 @@ export function evaluateOutcome(gameState) {
     /* High strain + elites still dominant               */
     /* ------------------------------------------------- */
 
-    if (stress >= 20 && powerGap <= 0) {
+    if (stress >= 18 && powerGap <= 5) {
         return {
             type: "SYSTEM COLLAPSE",
             message:
@@ -51,7 +51,7 @@ export function evaluateOutcome(gameState) {
     /* Elite dominance under high stress                */
     /* ------------------------------------------------- */
 
-    if (elitePower > socialPower && stress >= 15) {
+    if (elitePower > socialPower && stress >= 12) {
         return {
             type: "AUTHORITARIAN CONSOLIDATION",
             message:
@@ -68,7 +68,7 @@ export function evaluateOutcome(gameState) {
     /* Climate maxed + social advantage + stable        */
     /* ------------------------------------------------- */
 
-    if (ecoScore >= 20 && powerGap > 0 && stress < 18) {
+    if (ecoScore >= 18 && powerGap > 5 && stress < 16) {
         return {
             type: "ECOLOGICAL TRANSITION",
             message:
@@ -85,7 +85,7 @@ export function evaluateOutcome(gameState) {
     /* Strong redistribution + stable transition        */
     /* ------------------------------------------------- */
 
-    if (socialPower >= 30 && powerGap > 0 && stress < 18) {
+    if (socialPower >= 28 && powerGap > 5 && stress < 16) {
         return {
             type: "SOCIAL TRANSFORMATION",
             message:
@@ -102,7 +102,7 @@ export function evaluateOutcome(gameState) {
     /* High strain BUT social power wins                */
     /* ------------------------------------------------- */
 
-    if (stress >= 18 && powerGap > 0) {
+    if (stress >= 15 && powerGap > 0 && socialPower >= 22) {
         return {
             type: "TURBULENT TRANSFORMATION",
             message:
@@ -115,11 +115,11 @@ export function evaluateOutcome(gameState) {
     }
 
     /* ------------------------------------------------- */
-    /* 6. MANAGED STABILITY (Renamed for Music Sync)    */
-    /* Low stress + moderate balance                    */
+    /* 6. MANAGED STABILITY                              */
+    /* Moderate everything + low strain                 */
     /* ------------------------------------------------- */
 
-    if (stress < 12 && Math.abs(powerGap) <= 10) {
+    if (stress < 14 && Math.abs(powerGap) <= 14 && care >= 10 && climate >= 10) {
         return {
             type: "MANAGED STABILITY",
             message:
@@ -132,7 +132,24 @@ export function evaluateOutcome(gameState) {
     }
 
     /* ------------------------------------------------- */
-    /* 7. SYSTEM DRIFT (Fallback)                        */
+    /* 7. ECOLOGICAL CONSTRAINT                          */
+    /* Climate crisis without social power to respond   */
+    /* ------------------------------------------------- */
+
+    if (climate <= 5 && socialPower < 20 && stress >= 10) {
+        return {
+            type: "ECOLOGICAL CONSTRAINT",
+            message:
+                "Environmental collapse constrained social progress, as insufficient collective power failed to address the crisis.",
+            tags: {
+                ecological: true,
+                constrained: true
+            }
+        };
+    }
+
+    /* ------------------------------------------------- */
+    /* Fallback: SYSTEM DRIFT                            */
     /* ------------------------------------------------- */
 
     return {

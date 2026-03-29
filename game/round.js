@@ -168,6 +168,12 @@ function applyStructuralStrainDrift() {
         strainDelta = Math.round(strainDelta * currentAct.modifiers.strainMultiplier);
     }
 
+    // Strain acceleration: when strain > 14, it drifts faster toward collapse
+    if (strain > 14) {
+        const acceleration = Math.floor((strain - 14) / 2);
+        strainDelta += acceleration;
+    }
+
     let newStrain = strain + strainDelta;
     newStrain = Math.max(0, Math.min(20, newStrain));
 
@@ -324,6 +330,38 @@ export function endRound() {
     const actForSurge = getCurrentAct(gameState.round);
     if (actForSurge && actForSurge.modifiers.surgeBonus) {
         gameState.surge += actForSurge.modifiers.surgeBonus;
+    }
+
+    /* --------------------------------------------- */
+    /* 5b. CAPITAL SNOWBALL                         */
+    /* --------------------------------------------- */
+
+    // When capital > 14, it gains +1/round automatically
+    if (gameState.tracks.capital > 14) {
+        gameState.tracks.capital += 1;
+        log("CAPITAL_SNOWBALL", { capital: gameState.tracks.capital });
+    }
+
+    /* --------------------------------------------- */
+    /* 5c. SOCIAL POWER STRAIN                      */
+    /* --------------------------------------------- */
+
+    // High social power generates strain (cost of progress)
+    const socialPowerNow = gameState.tracks.care + gameState.tracks.solidarity;
+    if (socialPowerNow > 30) {
+        const strainFromSocial = Math.floor((socialPowerNow - 30) / 5);
+        gameState.tracks.strain = Math.min(20, gameState.tracks.strain + strainFromSocial);
+        log("SOCIAL_POWER_STRAIN", { socialPower: socialPowerNow, strainAdded: strainFromSocial });
+    }
+
+    /* --------------------------------------------- */
+    /* 5d. AUTHORITY RECOVERY                       */
+    /* --------------------------------------------- */
+
+    // When authority is very low, it slowly recovers toward 5
+    if (gameState.tracks.authority < 5) {
+        gameState.tracks.authority += 1;
+        log("AUTHORITY_RECOVERY", { authority: gameState.tracks.authority });
     }
 
     /* --------------------------------------------- */
