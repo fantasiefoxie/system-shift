@@ -7,6 +7,7 @@
 import { gameState } from "./state.js";
 import { playCard } from "./round.js";
 import { playSound } from "./audioManager.js";
+import { notify } from "./notificationCenter.js";
 import { 
     getResource, 
     consumeResource, 
@@ -249,22 +250,11 @@ function triggerTopBarAnimation(stat, positive) {
 }
 
 function triggerInteractionFeedback(name, type) {
-    // Visual feedback for interactions
-    const overlay = document.createElement("div");
-    overlay.className = `interaction-overlay ${type}`;
-    overlay.textContent = name;
-    
-    const app = document.getElementById("app");
-    if (app) {
-        app.appendChild(overlay);
-        
-        setTimeout(() => {
-            overlay.classList.add("fade-out");
-            setTimeout(() => {
-                if (overlay.parentNode) {
-                    overlay.parentNode.removeChild(overlay);
-                }
-            }, 500);
-        }, 1000);
-    }
+    const kind = type === "counter" ? "warning" : "positive";
+    notify({
+        kind,
+        title: type === "combo" ? "Combo" : type === "synergy" ? "Synergy" : "Counter",
+        message: name,
+        duration: 1400
+    });
 }

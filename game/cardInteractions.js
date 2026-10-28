@@ -5,6 +5,7 @@
 
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
+import { publishGameEvent } from "./uiEvents.js";
 
 /* ================================================= */
 /* CARD INTERACTION DEFINITIONS                      */
@@ -168,6 +169,13 @@ export function applyComboBonus(bonus) {
     }
     
     log("COMBO_BONUS_APPLIED", { bonus });
+    publishGameEvent({
+        source: "interaction",
+        severity: "positive",
+        title: "Combo triggered",
+        body: "A coordinated sequence amplified your action.",
+        deltas: bonus
+    });
 }
 
 /* ================================================= */
@@ -209,6 +217,13 @@ export function applySynergyBonus(bonus) {
     }
     
     log("SYNERGY_BONUS_APPLIED", { bonus });
+    publishGameEvent({
+        source: "interaction",
+        severity: "positive",
+        title: "Synergy activated",
+        body: "Aligned policies reinforced one another.",
+        deltas: bonus
+    });
 }
 
 /* ================================================= */
@@ -268,6 +283,13 @@ export function applyCounterPenalty(penalty) {
     }
     
     log("COUNTER_PENALTY_APPLIED", { penalty });
+    publishGameEvent({
+        source: "interaction",
+        severity: "warning",
+        title: "Counter pressure",
+        body: "Opposition pressure blunted part of your move.",
+        deltas: penalty
+    });
 }
 
 /* ================================================= */

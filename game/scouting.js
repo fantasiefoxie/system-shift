@@ -6,6 +6,7 @@
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
 import { factions } from "./oppositionSystem.js";
+import { publishGameEvent } from "./uiEvents.js";
 
 /* ================================================= */
 /* SCOUTED FACTIONS STORAGE                         */
@@ -95,6 +96,15 @@ export function scoutFaction(factionId) {
         threatLevel: factionState.threatLevel,
         active: factionState.active,
         expiresRound: gameState.round + 1
+    });
+
+    publishGameEvent({
+        id: `scout-${factionId}-${gameState.round}`,
+        source: "scouting",
+        severity: "info",
+        title: `Intel: ${factionDef.name}`,
+        body: intent,
+        deltas: { surge: -3 }
     });
 
     return true;

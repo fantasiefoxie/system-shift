@@ -1,10 +1,11 @@
 /* ================================================= */
-/* SYSTEM SHIFT – TUTORIAL SYSTEM                   */
+/* SYSTEM SHIFT - TUTORIAL SYSTEM                    */
 /* Interactive onboarding and contextual help        */
 /* ================================================= */
 
 import { gameState } from "./state.js";
 import { getCurrentAct } from "./acts.js";
+import { notify } from "./notificationCenter.js";
 
 /* ================================================= */
 /* TUTORIAL STATE                                   */
@@ -42,42 +43,42 @@ export const tutorialSteps = [
     {
         id: "tracks",
         title: "Track System",
-        message: "These 5 tracks represent your movement's impact. Higher care, climate, and solidarity are good. Lower authority and capital are better. Keep strain low!",
+        message: "These 5 tracks represent your movement's impact. Higher care, climate, and solidarity are good. Lower authority and capital are better. Keep strain low.",
         trigger: "firstRound",
         priority: 2
     },
     {
         id: "strain",
         title: "Strain - System Stress",
-        message: "Strain represents stress on the system. If strain reaches 20, you lose! Watch the strain ring - it turns red when dangerous.",
+        message: "Strain represents stress on the system. If strain reaches 20, you lose. Watch the strain ring as pressure rises.",
         trigger: "strainWarning",
         priority: 3
     },
     {
         id: "synergy",
         title: "Card Synergies",
-        message: "Some cards have synergies! Play cards with matching tags to trigger bonus effects. Look for the synergy description on cards.",
+        message: "Some cards have synergies. Play cards with matching tags to trigger bonus effects.",
         trigger: "firstSynergy",
         priority: 2
     },
     {
         id: "acts",
         title: "Act Structure",
-        message: "The game has 3 acts: Building Movement (safe), Confrontation (challenging), and Resolution (high stakes). Plan your strategy accordingly!",
+        message: "The game has 3 acts: Building Movement, Confrontation, and Resolution. Plan your strategy across the arc.",
         trigger: "actTransition",
         priority: 2
     },
     {
         id: "opposition",
         title: "Opposition System",
-        message: "Factions oppose your movement. As you gain success, they push back harder. Manage their resistance through careful strategy.",
+        message: "Factions oppose your movement. As you gain success, they push back harder.",
         trigger: "firstOpposition",
         priority: 2
     },
     {
         id: "resources",
         title: "Resource Management",
-        message: "You have 4 resources: Political, Social, Momentum, and Infrastructure. Spend them wisely - they're needed for powerful actions!",
+        message: "You have 4 resources: Political, Social, Momentum, and Infrastructure. Spend them wisely for key actions.",
         trigger: "firstResourceUse",
         priority: 2
     }
@@ -89,31 +90,28 @@ export const tutorialSteps = [
 
 export const contextualTips = {
     highStrain: {
-        title: "High Strain Warning!",
-        message: "Strain is getting high. Consider playing cards that reduce strain or avoid disruptive actions.",
+        title: "High Strain Warning",
+        message: "Strain is high. Consider stabilizing moves before escalation.",
         condition: () => gameState.tracks.strain >= 15
     },
     lowLeverage: {
         title: "Low Leverage",
-        message: "You're running low on leverage. End the round to recover, or play low-cost cards.",
+        message: "Leverage is thin. End the round to recover or play low-cost cards.",
         condition: () => gameState.leverage <= 2
     },
     synergyAvailable: {
-        title: "Synergy Opportunity!",
-        message: "You have cards that could trigger synergies! Look for matching tags.",
-        condition: () => {
-            // Check if any card in hand has synergy and matching tags exist
-            return gameState.playerHand.some(card => 
-                card.synergy && 
-                card.synergy.if_played_this_round.some(tag => 
-                    gameState.tagsPlayedThisRound.includes(tag)
-                )
-            );
-        }
+        title: "Synergy Opportunity",
+        message: "A hand synergy is available if you sequence cards carefully.",
+        condition: () => gameState.playerHand.some(card =>
+            card.synergy &&
+            card.synergy.if_played_this_round.some(tag =>
+                gameState.tagsPlayedThisRound.includes(tag)
+            )
+        )
     },
     actTransition: {
         title: "Act Transition Coming",
-        message: "The game is about to enter a new act. Expect changes in difficulty and opposition!",
+        message: "A new act is near. Expect the pressure profile to shift.",
         condition: () => {
             const currentAct = getCurrentAct(gameState.round);
             return currentAct && gameState.round === currentAct.rounds[currentAct.rounds.length - 1];
@@ -121,16 +119,16 @@ export const contextualTips = {
     },
     resourceLow: {
         title: "Resource Running Low",
-        message: "One of your resources is getting low. Consider actions that replenish it.",
-        condition: () => {
-            return gameState.resources.political <= 1 || 
-                   gameState.resources.social <= 1 ||
-                   gameState.resources.momentum <= 1;
-        }
+        message: "One or more resources are low. Replenish before pushing major actions.",
+        condition: () => (
+            gameState.resources.political <= 1 ||
+            gameState.resources.social <= 1 ||
+            gameState.resources.momentum <= 1
+        )
     },
     pushbackHigh: {
         title: "High Pushback",
-        message: "Pushback is high! Opposition is strong. Consider strategic retreats or alliance building.",
+        message: "Pushback is high. Strategic retreat or coalition moves may help.",
         condition: () => gameState.pushback?.value >= 15
     }
 };
@@ -140,8 +138,7 @@ export const contextualTips = {
 /* ================================================= */
 
 export function initTutorial() {
-    // Check if user has completed tutorial before
-    const savedTutorial = localStorage.getItem('systemShiftTutorial');
+    const savedTutorial = localStorage.getItem("systemShiftTutorial");
     if (savedTutorial) {
         try {
             const saved = JSON.parse(savedTutorial);
@@ -150,8 +147,7 @@ export function initTutorial() {
             console.warn("Failed to parse tutorial state:", e);
         }
     }
-    
-    // Show welcome message for new users
+
     if (tutorialState.firstTimeUser) {
         setTimeout(() => {
             showTutorialStep("welcome");
@@ -162,17 +158,17 @@ export function initTutorial() {
 export function showTutorialStep(stepId) {
     const step = tutorialSteps.find(s => s.id === stepId);
     if (!step || tutorialState.completedSteps.includes(stepId)) return;
-    
-    // Show tutorial modal
-    const modal = document.createElement('div');
-    modal.className = 'tutorial-modal';
+    if (document.querySelector(".tutorial-modal")) return;
+
+    const modal = document.createElement("div");
+    modal.className = "tutorial-modal";
     modal.innerHTML = `
         <div class="tutorial-content">
             <h3>${step.title}</h3>
             <p>${step.message}</p>
             <div class="tutorial-buttons">
                 <button class="tutorial-btn primary" onclick="this.closest('.tutorial-modal').remove(); markTutorialComplete('${stepId}')">
-                    Got it!
+                    Got it
                 </button>
                 <button class="tutorial-btn secondary" onclick="this.closest('.tutorial-modal').remove()">
                     Skip
@@ -180,10 +176,8 @@ export function showTutorialStep(stepId) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
-    // Log tutorial shown
     console.log(`Tutorial shown: ${stepId}`);
 }
 
@@ -191,20 +185,17 @@ export function markTutorialComplete(stepId) {
     if (!tutorialState.completedSteps.includes(stepId)) {
         tutorialState.completedSteps.push(stepId);
     }
-    
-    // Save to localStorage
-    localStorage.setItem('systemShiftTutorial', JSON.stringify(tutorialState));
-    
+
+    localStorage.setItem("systemShiftTutorial", JSON.stringify(tutorialState));
     console.log(`Tutorial completed: ${stepId}`);
 }
 
 export function checkContextualTips() {
     if (!tutorialState.showHints) return;
-    
-    // Check each contextual tip
+
     Object.entries(contextualTips).forEach(([tipId, tip]) => {
         if (tutorialState.dismissedTips.includes(tipId)) return;
-        
+
         if (tip.condition()) {
             showContextualTip(tipId, tip);
             tutorialState.dismissedTips.push(tipId);
@@ -213,26 +204,12 @@ export function checkContextualTips() {
 }
 
 export function showContextualTip(tipId, tip) {
-    // Show non-intrusive tip
-    const tipElement = document.createElement('div');
-    tipElement.className = 'contextual-tip';
-    tipElement.innerHTML = `
-        <div class="tip-header">
-            <span class="tip-icon">💡</span>
-            <span class="tip-title">${tip.title}</span>
-            <button class="tip-close" onclick="this.parentElement.parentElement.remove()">×</button>
-        </div>
-        <div class="tip-message">${tip.message}</div>
-    `;
-    
-    document.body.appendChild(tipElement);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (tipElement.parentNode) {
-            tipElement.remove();
-        }
-    }, 5000);
+    notify({
+        kind: "info",
+        title: tip.title,
+        message: tip.message,
+        duration: 4200
+    });
 }
 
 export function triggerTutorialEvent(eventType) {
@@ -244,26 +221,25 @@ export function triggerTutorialEvent(eventType) {
 
 export function toggleHints(enabled) {
     tutorialState.showHints = enabled;
-    localStorage.setItem('systemShiftTutorial', JSON.stringify(tutorialState));
+    localStorage.setItem("systemShiftTutorial", JSON.stringify(tutorialState));
 }
 
 export function setHintLevel(level) {
     tutorialState.hintLevel = level;
-    localStorage.setItem('systemShiftTutorial', JSON.stringify(tutorialState));
+    localStorage.setItem("systemShiftTutorial", JSON.stringify(tutorialState));
 }
 
 export function resetTutorial() {
     tutorialState.completedSteps = [];
     tutorialState.dismissedTips = [];
     tutorialState.firstTimeUser = true;
-    localStorage.setItem('systemShiftTutorial', JSON.stringify(tutorialState));
+    localStorage.setItem("systemShiftTutorial", JSON.stringify(tutorialState));
 }
 
 /* ================================================= */
 /* TUTORIAL TRIGGERS                                */
 /* ================================================= */
 
-// Call these from main game code at appropriate moments
 export function onGameStart() {
     triggerTutorialEvent("gameStart");
 }

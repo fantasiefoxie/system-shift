@@ -5,6 +5,7 @@
 
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
+import { publishGameEvent } from "./uiEvents.js";
 
 /* ================================================= */
 /* THRESHOLD DEFINITIONS                            */
@@ -136,6 +137,33 @@ function applyThresholdEffect(threshold) {
     });
 }
 
+function getThresholdSeverity(effect) {
+    if (effect === "strain_spike" || effect === "elite_desperation") {
+        return "critical";
+    }
+    if (effect === "strain_per_round" || effect === "unlock_radical") {
+        return "warning";
+    }
+    if (effect === "strain_reduction" || effect === "surge_bonus" || effect === "new_ending") {
+        return "positive";
+    }
+    return "info";
+}
+
+function getThresholdDeltas(threshold) {
+    if (!Number.isFinite(Number(threshold.value))) return {};
+    const value = Number(threshold.value);
+
+    if (threshold.effect === "strain_spike" || threshold.effect === "strain_per_round" || threshold.effect === "strain_reduction") {
+        return { strain: value };
+    }
+    if (threshold.effect === "surge_bonus") {
+        return { surge: value };
+    }
+
+    return {};
+}
+
 /* ================================================= */
 /* CHECK THRESHOLDS                                 */
 /* Called at end of each round                       */
@@ -152,6 +180,14 @@ export function checkThresholds() {
                 id: threshold.id,
                 name: threshold.name,
                 effect: threshold.effect
+            });
+            publishGameEvent({
+                id: `threshold-${threshold.id}-${gameState.round}`,
+                source: "threshold",
+                severity: getThresholdSeverity(threshold.effect),
+                title: `Threshold crossed: ${threshold.name}`,
+                body: `System conditions triggered ${threshold.name.toLowerCase()}.`,
+                deltas: getThresholdDeltas(threshold)
             });
         }
     });

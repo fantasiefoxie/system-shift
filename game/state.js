@@ -124,6 +124,22 @@ export const gameState = {
     },
 
     /* ================================================= */
+    /* UI STATE                                          */
+    /* ================================================= */
+
+    ui: {
+        roundPhase: "PLAYING",
+        pacingMode: "standard",
+        orientationMode: "portrait",
+        markerVerbosity: "normal",
+        feed: {
+            items: [],
+            maxItems: 40,
+            markerVerbosity: "normal"
+        }
+    },
+
+    /* ================================================= */
     /* DIFFICULTY MODE                                  */
     /* ================================================= */
 

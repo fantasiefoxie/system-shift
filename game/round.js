@@ -32,6 +32,7 @@ import { checkMemory } from "./memory.js";
 import { checkThresholds } from "./thresholds.js";
 import { clearExpiredScouts } from "./scouting.js";
 import { resetNegotiationForAct } from "./negotiation.js";
+import { publishGameEvent } from "./uiEvents.js";
 
 /* Track surge changes within round */
 let surgeDeltaThisRound = 0;
@@ -235,6 +236,13 @@ function applyStructuralStrainDrift() {
 export function endRound() {
 
     log("ROUND_ENDING", { round: gameState.round });
+    publishGameEvent({
+        id: `round-end-${gameState.round}`,
+        source: "round",
+        severity: "info",
+        title: `Round ${gameState.round} concluded`,
+        body: "System forces recalibrated before the next phase."
+    });
 
     if (gameState.round >= gameState.maxRounds) {
         gameState.gameOver = true;
@@ -243,6 +251,13 @@ export function endRound() {
     }
 
     gameState.round += 1;
+    publishGameEvent({
+        id: `round-start-${gameState.round}`,
+        source: "round",
+        severity: "info",
+        title: `Round ${gameState.round} begins`,
+        body: "A new chapter opens with fresh pressures and choices."
+    });
 
     // Clear expired scouts at start of new round (3A)
     clearExpiredScouts();
@@ -256,6 +271,14 @@ export function endRound() {
         // Reset negotiation on act transition (3C)
         if (previousAct !== currentAct.act) {
             resetNegotiationForAct();
+            publishGameEvent({
+                id: `act-transition-${currentAct.act}-${gameState.round}`,
+                source: "act",
+                severity: "warning",
+                title: `Act ${currentAct.act}: ${currentAct.name}`,
+                body: currentAct.description || "The political climate shifts.",
+                deltas: currentAct.modifiers || {}
+            });
         }
     }
 

@@ -6,6 +6,6 @@
   "main": "main.js",
   "scripts": {
     "start": "python -m http.server 8080",
-    "test": "echo \"Tests require browser environment\""
+    "test": "node test-event-surface.js && node test-round-flow.js"
   }
 }

@@ -6,6 +6,7 @@
 import { gameState } from "./state.js";
 import { getCurrentAct } from "./acts.js";
 import { log } from "./logger.js";
+import { publishGameEvent } from "./uiEvents.js";
 
 /* ================================================= */
 /* NARRATIVE STATE                                  */
@@ -286,6 +287,13 @@ export function triggerStoryBeat(beatId) {
     showNarrativeModal(beat);
     
     log("STORY_BEAT_TRIGGERED", { beatId, title: beat.title });
+    publishGameEvent({
+        id: `story-beat-${beatId}-${gameState.round}`,
+        source: "narrative",
+        severity: "info",
+        title: beat.title,
+        body: beat.description
+    });
     
     // Save state
     saveNarrativeState();
@@ -347,6 +355,13 @@ export function applyNarrativeChoice(beat, choice) {
         choice: choice.text, 
         effects: choice.effect 
     });
+    publishGameEvent({
+        source: "narrative",
+        severity: "positive",
+        title: `Decision: ${choice.text}`,
+        body: `You committed to a path in ${beat.title}.`,
+        deltas: choice.effect
+    });
     
     saveNarrativeState();
 }
@@ -398,6 +413,14 @@ export function checkNarrativeTriggers() {
         if (value >= 18 && !narrativeState.historicalEvents.includes(`${track}_critical`)) {
             narrativeState.historicalEvents.push(`${track}_critical`);
             log("CRITICAL_TRACK_EVENT", { track, value });
+            publishGameEvent({
+                id: `critical-track-${track}-${gameState.round}`,
+                source: "narrative",
+                severity: "critical",
+                title: `${track.charAt(0).toUpperCase() + track.slice(1)} reached critical`,
+                body: getTrackNarrative(track, value),
+                deltas: { [track]: value }
+            });
         }
     });
 }

@@ -2,7 +2,10 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title>System Shift – Research Build</title>
+    <title>System Shift - Research Build</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -10,163 +13,189 @@
 <div id="app">
     <canvas id="ambientCanvas"></canvas>
     <div id="systemWarningOverlay"></div>
+    <div id="notificationStack" class="notification-stack" aria-live="polite"></div>
 
-    <!-- TOP ROW -->
-    <div class="top-bar">
-        <div class="halo-stat">
-            <div class="halo-label">Round</div>
-            <div id="roundStat" class="halo-value"></div>
-        </div>
+    <section class="command-strip">
+        <div class="top-bar">
+            <div class="halo-stat">
+                <div class="halo-label">Round</div>
+                <div id="roundStat" class="halo-value"></div>
+            </div>
 
-        <div class="halo-stat">
-            <div class="halo-label">Act</div>
-            <div id="actIndicator" class="halo-value"></div>
-        </div>
+            <div class="halo-stat">
+                <div class="halo-label">Act</div>
+                <div id="actIndicator" class="halo-value"></div>
+            </div>
 
-        <div class="halo-stat">
-            <div class="halo-label">Leverage</div>
-            <div id="leverageStat" class="halo-value"></div>
-        </div>
+            <div class="halo-stat">
+                <div class="halo-label">Leverage</div>
+                <div id="leverageStat" class="halo-value"></div>
+            </div>
 
-        <div class="halo-stat">
-            <div class="halo-label">Plays</div>
-            <div id="playsStat" class="halo-value"></div>
-        </div>
+            <div class="halo-stat">
+                <div class="halo-label">Plays</div>
+                <div id="playsStat" class="halo-value"></div>
+            </div>
 
-        <div class="halo-stat">
-            <div class="halo-label">Surge</div>
-            <div id="surgeStat" class="halo-value"></div>
-        </div>
+            <div class="halo-stat">
+                <div class="halo-label">Surge</div>
+                <div id="surgeStat" class="halo-value"></div>
+            </div>
 
-        <div class="halo-stat">
-            <div class="halo-label">Pushback</div>
-            <div id="pushbackStat" class="halo-value"></div>
-        </div>
-    </div>
-
-    <!-- WORLD STATE (3B: Historical Memory) -->
-    <div id="worldState" class="world-state" style="display: none;">
-        <span class="world-state-label">World State:</span>
-        <span id="worldStateText"></span>
-    </div>
-
-    <!-- RESOURCES -->
-    <div id="resources">
-        <div class="resource-item resource-political">
-            <span class="resource-label">Political</span>
-            <span id="politicalStat" class="resource-value">5</span>
-            <div class="resource-bar">
-                <div class="resource-fill"></div>
+            <div class="halo-stat">
+                <div class="halo-label">Pushback</div>
+                <div id="pushbackStat" class="halo-value"></div>
             </div>
         </div>
-        <div class="resource-item resource-social">
-            <span class="resource-label">Social</span>
-            <span id="socialStat" class="resource-value">5</span>
-            <div class="resource-bar">
-                <div class="resource-fill"></div>
+
+        <div id="resources">
+            <div class="resource-item resource-political">
+                <span class="resource-label">Political</span>
+                <span id="politicalStat" class="resource-value">5</span>
+                <div class="resource-bar">
+                    <div class="resource-fill"></div>
+                </div>
+            </div>
+            <div class="resource-item resource-social">
+                <span class="resource-label">Social</span>
+                <span id="socialStat" class="resource-value">5</span>
+                <div class="resource-bar">
+                    <div class="resource-fill"></div>
+                </div>
+            </div>
+            <div class="resource-item resource-momentum">
+                <span class="resource-label">Momentum</span>
+                <span id="momentumStat" class="resource-value">0</span>
+                <div class="resource-bar">
+                    <div class="resource-fill"></div>
+                </div>
+            </div>
+            <div class="resource-item resource-infrastructure">
+                <span class="resource-label">Infrastructure</span>
+                <span id="infrastructureStat" class="resource-value">0</span>
+                <div class="resource-bar">
+                    <div class="resource-fill"></div>
+                </div>
+            </div>
+            <div class="resource-item resource-arc">
+                <span class="resource-label">Narrative State</span>
+                <span id="narrativeArcIndicator" class="resource-value">The Movement Begins</span>
+            </div>
+            <div class="resource-item resource-phase">
+                <span class="resource-label">Round Phase</span>
+                <span id="roundPhaseIndicator" class="resource-value">PLAYING</span>
             </div>
         </div>
-        <div class="resource-item resource-momentum">
-            <span class="resource-label">Momentum</span>
-            <span id="momentumStat" class="resource-value">0</span>
-            <div class="resource-bar">
-                <div class="resource-fill"></div>
+
+        <div class="command-actions">
+            <button id="nextRoundBtn" class="primary-action">End Round</button>
+            <div class="command-menu">
+                <button id="menuBtn" class="menu-trigger">Menu</button>
+                <div id="menuPanel" class="menu-panel" hidden>
+                    <button id="libraryBtn">Library</button>
+                    <button id="achievementsBtn" onclick="window.openAchievementsModal()">Achievements</button>
+                    <button id="statsBtn">Stats</button>
+                    <button id="exportLogBtn">Export Log</button>
+                    <button id="orientationToggleBtn">Layout: Portrait</button>
+                    <button id="settingsBtn">Settings</button>
+                </div>
             </div>
         </div>
-        <div class="resource-item resource-infrastructure">
-            <span class="resource-label">Infrastructure</span>
-            <span id="infrastructureStat" class="resource-value">0</span>
-            <div class="resource-bar">
-                <div class="resource-fill"></div>
+    </section>
+
+    <section class="systems-board">
+        <div id="worldState" class="world-state" style="display: none;">
+            <span class="world-state-label">World State:</span>
+            <span id="worldStateText"></span>
+        </div>
+
+        <div class="track-row">
+            <div id="track-strain" class="track-halo">
+                <div class="halo-label">Strain</div>
+                <div class="halo-ring"></div>
+                <div class="halo-value"></div>
+            </div>
+
+            <div id="track-care" class="track-halo">
+                <div class="halo-label">Care</div>
+                <div class="halo-ring"></div>
+                <div class="halo-value"></div>
+            </div>
+
+            <div id="track-climate" class="track-halo">
+                <div class="halo-label">Climate</div>
+                <div class="halo-ring"></div>
+                <div class="halo-value"></div>
+            </div>
+
+            <div id="track-solidarity" class="track-halo">
+                <div class="halo-label">Solidarity</div>
+                <div class="halo-ring"></div>
+                <div class="halo-value"></div>
+            </div>
+
+            <div id="track-authority" class="track-halo">
+                <div class="halo-label">Authority</div>
+                <div class="halo-ring"></div>
+                <div class="halo-value"></div>
+            </div>
+
+            <div id="track-capital" class="track-halo">
+                <div class="halo-label">Capital</div>
+                <div class="halo-ring"></div>
+                <div class="halo-value"></div>
             </div>
         </div>
-    </div>
 
-    <!-- TRACK HALOS -->
-    <div class="track-row">
-
-        <div id="track-care" class="track-halo">
-            <div class="halo-label">Care</div>
-            <div class="halo-ring"></div>
-            <div class="halo-value"></div>
-        </div>
-
-        <div id="track-climate" class="track-halo">
-            <div class="halo-label">Climate</div>
-            <div class="halo-ring"></div>
-            <div class="halo-value"></div>
-        </div>
-
-        <div id="track-solidarity" class="track-halo">
-            <div class="halo-label">Solidarity</div>
-            <div class="halo-ring"></div>
-            <div class="halo-value"></div>
-        </div>
-
-        <div id="track-authority" class="track-halo">
-            <div class="halo-label">Authority</div>
-            <div class="halo-ring"></div>
-            <div class="halo-value"></div>
-        </div>
-
-        <div id="track-capital" class="track-halo">
-            <div class="halo-label">Capital</div>
-            <div class="halo-ring"></div>
-            <div class="halo-value"></div>
-        </div>
-    </div>
-<!-- STRAIN CORE LAYER -->
-<div class="strain-layer">
-    <div id="track-strain" class="track-halo">
-        <div class="halo-label">Strain</div>
-        <div class="halo-ring"></div>
-        <div class="halo-value"></div>
-    </div>
-</div>
-
-    <!-- FACTION DISPLAY (3A: Scouting, 3C: Negotiation) -->
-    <div id="factionRow" class="faction-row">
-        <div class="faction-indicator" data-faction="elite">
-            <span class="faction-name">Elite</span>
-            <span class="faction-threat" id="eliteThreat"></span>
-            <div class="faction-actions">
-                <button class="scout-btn" data-faction="elite">Scout (3⚡)</button>
-                <button class="negotiate-btn" data-faction="elite">Negotiate</button>
+        <div id="factionRow" class="faction-row">
+            <div class="faction-indicator" data-faction="elite">
+                <span class="faction-name">Elite</span>
+                <span class="faction-threat" id="eliteThreat"></span>
+                <div class="faction-actions">
+                    <button class="scout-btn" data-faction="elite">Scout (3 Surge)</button>
+                    <button class="negotiate-btn" data-faction="elite">Negotiate</button>
+                </div>
+                <span class="scout-tooltip" id="eliteScoutTooltip"></span>
             </div>
-            <span class="scout-tooltip" id="eliteScoutTooltip"></span>
-        </div>
-        <div class="faction-indicator" data-faction="authoritarian">
-            <span class="faction-name">Authoritarian</span>
-            <span class="faction-threat" id="authoritarianThreat"></span>
-            <div class="faction-actions">
-                <button class="scout-btn" data-faction="authoritarian">Scout (3⚡)</button>
-                <button class="negotiate-btn" data-faction="authoritarian">Negotiate</button>
+            <div class="faction-indicator" data-faction="authoritarian">
+                <span class="faction-name">Authoritarian</span>
+                <span class="faction-threat" id="authoritarianThreat"></span>
+                <div class="faction-actions">
+                    <button class="scout-btn" data-faction="authoritarian">Scout (3 Surge)</button>
+                    <button class="negotiate-btn" data-faction="authoritarian">Negotiate</button>
+                </div>
+                <span class="scout-tooltip" id="authoritarianScoutTooltip"></span>
             </div>
-            <span class="scout-tooltip" id="authoritarianScoutTooltip"></span>
-        </div>
-        <div class="faction-indicator" data-faction="statusquo">
-            <span class="faction-name">Status Quo</span>
-            <span class="faction-threat" id="statusquoThreat"></span>
-            <div class="faction-actions">
-                <button class="scout-btn" data-faction="statusquo">Scout (3⚡)</button>
-                <button class="negotiate-btn" data-faction="statusquo">Negotiate</button>
+            <div class="faction-indicator" data-faction="statusquo">
+                <span class="faction-name">Status Quo</span>
+                <span class="faction-threat" id="statusquoThreat"></span>
+                <div class="faction-actions">
+                    <button class="scout-btn" data-faction="statusquo">Scout (3 Surge)</button>
+                    <button class="negotiate-btn" data-faction="statusquo">Negotiate</button>
+                </div>
+                <span class="scout-tooltip" id="statusquoScoutTooltip"></span>
             </div>
-            <span class="scout-tooltip" id="statusquoScoutTooltip"></span>
         </div>
-    </div>
+    </section>
 
-    <!-- CARD ROW -->
-    <div id="hand" class="card-row"></div>
+    <section class="operations-lore">
+        <div class="operations-main">
+            <div id="transitionPanel" class="transition-panel" style="display: none;"></div>
+            <div id="hand" class="card-row"></div>
+        </div>
 
-    <!-- CONTROLS -->
-    <div id="controls">
-        <button id="libraryBtn">Library</button>
-        <button id="achievementsBtn" onclick="window.openAchievementsModal()">Achievements</button>
-        <button id="statsBtn">Stats</button>
-        <button id="exportLogBtn">Export Log</button>
-        <button id="nextRoundBtn">Next Round</button>
-    </div>
+        <aside class="lore-rail">
+            <div id="narrativeSummaryCard" class="narrative-summary-card"></div>
 
+            <div class="situation-feed-panel">
+                <div class="panel-head">
+                    <h3>Situation Feed</h3>
+                    <span id="feedCount"></span>
+                </div>
+                <div id="situationFeed" class="situation-feed"></div>
+            </div>
+        </aside>
+    </section>
 </div>
 
 <!-- ================= DIFFICULTY SELECTION ================= -->
@@ -177,25 +206,25 @@
             Choose how challenging your transformation will be.
         </p>
         <div style="display: flex; flex-direction: column; gap: 12px;">
-            <button class="tutorial-btn difficulty-btn" onclick="window.selectDifficulty('easy')" 
-                    style="background: linear-gradient(145deg, #166534, #15803d); border: 1px solid #22c55e;">
-                <strong>EASY</strong>
+            <button class="tutorial-btn difficulty-btn" onclick="window.selectDifficulty('easy')"
+                    style="background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(21,128,61,0.2)); border: 1px solid rgba(34,197,94,0.4); box-shadow: 0 4px 12px rgba(34,197,94,0.15), inset 0 1px 0 rgba(255,255,255,0.1); backdrop-filter: blur(8px);">
+                <strong style="color: #4ade80; text-shadow: 0 0 10px rgba(74,222,128,0.4);">EASY</strong>
                 <span style="display: block; font-size: 0.8rem; font-weight: 400; margin-top: 4px; color: #bbf7d0;">
-                    Starting leverage 7 · Strain 0.6x · Opposition 70%
+                    Starting leverage 7 - Strain 0.6x - Opposition 70%
                 </span>
             </button>
             <button class="tutorial-btn difficulty-btn" onclick="window.selectDifficulty('normal')"
-                    style="background: linear-gradient(145deg, #1e3a5f, #1d4ed8); border: 1px solid #3b82f6;">
-                <strong>NORMAL</strong>
+                    style="background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(29,78,216,0.2)); border: 1px solid rgba(59,130,246,0.4); box-shadow: 0 4px 12px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.1); backdrop-filter: blur(8px);">
+                <strong style="color: #60a5fa; text-shadow: 0 0 10px rgba(96,165,250,0.4);">NORMAL</strong>
                 <span style="display: block; font-size: 0.8rem; font-weight: 400; margin-top: 4px; color: #bfdbfe;">
-                    Starting leverage 5 · Strain 1.0x · Opposition 100%
+                    Starting leverage 5 - Strain 1.0x - Opposition 100%
                 </span>
             </button>
             <button class="tutorial-btn difficulty-btn" onclick="window.selectDifficulty('hard')"
-                    style="background: linear-gradient(145deg, #7f1d1d, #b91c1c); border: 1px solid #ef4444;">
-                <strong>HARD</strong>
+                    style="background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(185,28,28,0.2)); border: 1px solid rgba(239,68,68,0.4); box-shadow: 0 4px 12px rgba(239,68,68,0.15), inset 0 1px 0 rgba(255,255,255,0.1); backdrop-filter: blur(8px);">
+                <strong style="color: #f87171; text-shadow: 0 0 10px rgba(248,113,113,0.4);">HARD</strong>
                 <span style="display: block; font-size: 0.8rem; font-weight: 400; margin-top: 4px; color: #fecaca;">
-                    Starting leverage 4 · Strain 1.2x · Opposition 130%
+                    Starting leverage 4 - Strain 1.2x - Opposition 130%
                 </span>
             </button>
         </div>
@@ -228,23 +257,23 @@
     </div>
 </div>
 
-<!-- ================= NEGOTIATION MODAL (3C) ================= -->
+<!-- ================= NEGOTIATION MODAL ================= -->
 <div id="negotiationModal" class="tutorial-modal" style="display: none;">
     <div class="tutorial-content" style="max-width: 450px;">
         <h3>Negotiate with <span id="negotiationFactionName"></span></h3>
         <p id="negotiationFactionStatus" style="color: #94a3b8; margin-bottom: 20px;"></p>
         <p style="margin-bottom: 16px;">Choose your offer strength:</p>
         <div class="negotiation-options">
-            <button onclick="window.negotiate('low')">Low Offer (2⚡ — 25% success)</button>
-            <button onclick="window.negotiate('medium')">Medium Offer (4⚡ — 50% success)</button>
-            <button onclick="window.negotiate('high')">High Offer (6⚡ — 75% success)</button>
+            <button onclick="window.negotiate('low')">Low Offer (2 Surge - 25% success)</button>
+            <button onclick="window.negotiate('medium')">Medium Offer (4 Surge - 50% success)</button>
+            <button onclick="window.negotiate('high')">High Offer (6 Surge - 75% success)</button>
             <button class="tutorial-btn secondary" onclick="window.closeNegotiationModal()">Cancel</button>
         </div>
         <div id="negotiationResult" style="display: none; margin-top: 16px; padding: 12px; border-radius: 8px;"></div>
     </div>
 </div>
 
-<!-- ================= ACHIEVEMENTS MODAL (4.4) ================= -->
+<!-- ================= ACHIEVEMENTS MODAL ================= -->
 <div id="achievementsModal" class="tutorial-modal" style="display: none;">
     <div class="tutorial-content stats-modal-content">
         <h3>Achievements</h3>
@@ -255,23 +284,49 @@
     </div>
 </div>
 
-<!-- ================= AUDIO LAYERS ================= -->
+<!-- ================= UI SETTINGS ================= -->
+<div id="uiSettingsModal" class="tutorial-modal" style="display: none;">
+    <div class="tutorial-content" style="max-width: 430px;">
+        <h3>Experience Settings</h3>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; color: #cbd5e1;">
+                Round pacing
+                <select id="pacingSelect" style="padding: 10px; border-radius: 8px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155;">
+                    <option value="cinematic">Cinematic</option>
+                    <option value="standard">Standard</option>
+                    <option value="fast">Fast</option>
+                </select>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 6px; color: #cbd5e1;">
+                Event marker detail
+                <select id="markerVerbositySelect" style="padding: 10px; border-radius: 8px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155;">
+                    <option value="minimal">Minimal</option>
+                    <option value="normal">Normal</option>
+                    <option value="detailed">Detailed</option>
+                </select>
+            </label>
+        </div>
+        <div class="tutorial-buttons" style="margin-top: 20px;">
+            <button class="tutorial-btn secondary" id="settingsCloseBtn">Cancel</button>
+            <button class="tutorial-btn primary" id="settingsSaveBtn">Save</button>
+        </div>
+    </div>
+</div>
 
 <audio id="bgCalm" src="./assets/audio/calm.mp3" preload="auto"></audio>
 <audio id="bgTension" src="./assets/audio/tension.mpeg" preload="auto"></audio>
 <audio id="bgCollapse" src="./assets/audio/collapse.mp3.mpeg" preload="auto"></audio>
 <audio id="sfxLowCapital" src="./assets/audio/lowtension.mp3.mpeg" preload="auto"></audio>
 
-<script type="module" src="main.js?v=6"></script>
+<script type="module" src="main.js?v=7"></script>
 <script>
-    // Error handling for module loading
-    window.addEventListener('error', function(e) {
-        console.error('Global error:', e.error);
-        const app = document.getElementById('app');
+    window.addEventListener("error", function(e) {
+        console.error("Global error:", e.error);
+        const app = document.getElementById("app");
         if (app) {
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = 'position:fixed;top:10px;right:10px;background:#ef4444;color:white;padding:20px;border-radius:8px;z-index:9999;max-width:400px;';
-            errorDiv.innerHTML = '<strong>JavaScript Error:</strong><br>' + (e.error?.message || e.message || 'Unknown error');
+            const errorDiv = document.createElement("div");
+            errorDiv.style.cssText = "position:fixed;top:10px;right:10px;background:#ef4444;color:white;padding:20px;border-radius:8px;z-index:9999;max-width:400px;";
+            errorDiv.innerHTML = "<strong>JavaScript Error:</strong><br>" + (e.error?.message || e.message || "Unknown error");
             app.appendChild(errorDiv);
         }
     });

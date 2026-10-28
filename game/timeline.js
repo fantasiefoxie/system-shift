@@ -1,3 +1,4 @@
+/* @deprecated Legacy presentation module (obsolete track model). */
 import { gameState } from "./state.js";
 import { drawGraph } from "./graph.js";
 

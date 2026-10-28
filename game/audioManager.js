@@ -50,7 +50,12 @@ const soundMap = {
     ecoEnding: "relaxed-scene.mp3",
     ecoNature: "nature-sound.mp3",
     socialistEnding: "the-international.mp3",
-    revolutionaryEnding: "bella-ciao.mp3"
+    revolutionaryEnding: "bella-ciao.mp3",
+
+    /* Atmosphere loops */
+    ambientCalm: "calm.mp3",
+    ambientTension: "tension.mpeg",
+    ambientCrisis: "collapse.mp3.mpeg"
 };
 
 /* ------------------------------------------------- */
@@ -62,6 +67,7 @@ let masterVolume = 0.6;
 let musicVolume = 0.45;
 let muted = false;
 let currentMusic = null;
+let activeAtmosphere = null;
 
 /* Anti-spam for rapid micro sounds */
 const lastPlayed = {};
@@ -169,6 +175,7 @@ export function stopMusic() {
     } catch {}
 
     currentMusic = null;
+    activeAtmosphere = null;
 }
 
 /* ------------------------------------------------- */
@@ -199,6 +206,30 @@ export function unmuteAll() {
 
 export function toggleMute() {
     muted = !muted;
+}
+
+/* ================================================= */
+/* ATMOSPHERE SYNC                                  */
+/* ================================================= */
+
+export function syncAtmosphere({ act = 1, strain = 0 } = {}) {
+    if (muted) return;
+
+    let target = "ambientCalm";
+    let volume = 0.32;
+
+    if (strain >= 18) {
+        target = "ambientCrisis";
+        volume = 0.42;
+    } else if (strain >= 12 || act >= 3) {
+        target = "ambientTension";
+        volume = 0.35;
+    }
+
+    if (activeAtmosphere === target && currentMusic) return;
+
+    activeAtmosphere = target;
+    playMusic(target, { loop: true, volume });
 }
 
 /* ================================================= */

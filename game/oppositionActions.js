@@ -7,6 +7,7 @@ import { gameState } from "./state.js";
 import { log } from "./logger.js";
 import { random, randomInt } from "./rng.js";
 import { factions } from "./oppositionSystem.js";
+import { publishGameEvent } from "./uiEvents.js";
 
 /* ================================================= */
 /* OPPOSITION CARD DEFINITIONS                       */
@@ -253,6 +254,15 @@ function executeFactionAction(factionId) {
             faction: faction.name,
             card: card.title,
             trigger: card.trigger
+        });
+
+        publishGameEvent({
+            id: `opposition-action-${factionId}-${gameState.round}`,
+            source: "opposition",
+            severity: "warning",
+            title: `${faction.name} acts: ${card.title}`,
+            body: card.description,
+            deltas: card.effects
         });
 
         // Update faction state

@@ -1,4 +1,5 @@
 // game/endings.js
+// @deprecated Legacy presentation module (obsolete track model).
 
 export function getReflectiveQuestion(finalState) {
 

@@ -1,4 +1,5 @@
 // game/graph.js
+// @deprecated Legacy presentation module (obsolete track model).
 
 let canvas;
 let ctx;

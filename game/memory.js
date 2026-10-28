@@ -5,6 +5,7 @@
 
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
+import { publishGameEvent } from "./uiEvents.js";
 
 /* ================================================= */
 /* MEMORY CHECKS                                    */
@@ -48,7 +49,17 @@ export const memoryChecks = {
 export function checkMemory() {
     for (let check of Object.values(memoryChecks)) {
         const result = check(gameState);
-        if (result) return result;
+        if (result) {
+            publishGameEvent({
+                id: `memory-${result.type}-${gameState.round}`,
+                source: "memory",
+                severity: result.type === "broken_promise" ? "warning" : "positive",
+                title: result.type === "broken_promise" ? "Memory backlash" : "Memory momentum",
+                body: result.message,
+                deltas: result.effect
+            });
+            return result;
+        }
     }
     return null;
 }
