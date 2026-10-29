@@ -1307,6 +1307,7 @@ function resetGameOverRecorded() {
 function renderHand() {
     if (!handDiv) return;
     handDiv.innerHTML = "";
+    handDiv.classList.toggle("game-over-active", gameState.gameOver);
 
     if (gameState.gameOver) {
         const ending = evaluateOutcome(gameState);

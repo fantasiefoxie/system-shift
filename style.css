@@ -4816,3 +4816,9 @@ button:active:not(:disabled) {
         grid-template-rows: auto auto max-content;
     }
 }
+
+/* Game-over panel must span the full hand area, including responsive 5-column layouts. */
+#hand.card-row.game-over-active {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: hidden;
+}
