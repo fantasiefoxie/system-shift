@@ -3,6 +3,15 @@
 /* Unified stack for toasts, hints, and quick cues   */
 /* ================================================= */
 
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 let stackEl = null;
 const liveNotifications = [];
 
@@ -54,8 +63,8 @@ export function notify({
 
     card.className = `notification-card ${cssKind}`;
     card.innerHTML = `
-        <div class="notification-title">${title || "Update"}</div>
-        <div class="notification-message">${message || ""}</div>
+        <div class="notification-title">${escapeHtml(title || "Update")}</div>
+        <div class="notification-message">${escapeHtml(message || "")}</div>
     `;
 
     container.prepend(card);

@@ -103,9 +103,29 @@ export function attemptNegotiation(factionId, offerStrength) {
         
         // Track stat for Diplomat achievement
         try {
-            const stats = JSON.parse(localStorage.getItem("systemshift_stats") || "{}");
-            stats.successfulNegotiations = (stats.successfulNegotiations || 0) + 1;
-            localStorage.setItem("systemshift_stats", JSON.stringify(stats));
+            let stats = {};
+            let isValidShape = true;
+            try {
+                const raw = localStorage.getItem("systemshift_stats");
+                const parsed = JSON.parse(raw || "{}");
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    stats = parsed;
+                } else {
+                    isValidShape = false;
+                    console.warn("Stats storage has invalid shape; skipping update.");
+                }
+            } catch (e) {
+                isValidShape = false;
+                console.warn("Failed to parse negotiation stat:", e);
+            }
+            if (isValidShape) {
+                stats.successfulNegotiations = (stats.successfulNegotiations || 0) + 1;
+                try {
+                    localStorage.setItem("systemshift_stats", JSON.stringify(stats));
+                } catch (e) {
+                    console.warn("Failed to save negotiation stat:", e);
+                }
+            }
         } catch (e) {
             console.warn("Failed to update negotiation stat:", e);
         }

@@ -7,6 +7,23 @@ import { gameState } from "./state.js";
 import { getCurrentAct } from "./acts.js";
 import { notify } from "./notificationCenter.js";
 
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function safeSetItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) {
+        console.warn("Failed to save tutorial state:", e);
+    }
+}
+
 /* ================================================= */
 /* TUTORIAL STATE                                   */
 /* ================================================= */
@@ -50,7 +67,7 @@ export const tutorialSteps = [
     {
         id: "strain",
         title: "Strain - System Stress",
-        message: "Strain represents stress on the system. If strain reaches 20, you lose. Watch the strain ring as pressure rises.",
+        message: "Strain represents stress on the system. High strain can lead to collapse. Watch the strain ring as pressure rises.",
         trigger: "strainWarning",
         priority: 3
     },
@@ -138,14 +155,26 @@ export const contextualTips = {
 /* ================================================= */
 
 export function initTutorial() {
-    const savedTutorial = localStorage.getItem("systemShiftTutorial");
-    if (savedTutorial) {
-        try {
-            const saved = JSON.parse(savedTutorial);
-            Object.assign(tutorialState, saved);
-        } catch (e) {
-            console.warn("Failed to parse tutorial state:", e);
+    try {
+        const savedTutorial = localStorage.getItem("systemShiftTutorial");
+        if (savedTutorial) {
+            try {
+                const saved = JSON.parse(savedTutorial);
+                if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+                    if (Array.isArray(saved.completedSteps)) tutorialState.completedSteps = saved.completedSteps;
+                    if (Array.isArray(saved.dismissedTips)) tutorialState.dismissedTips = saved.dismissedTips;
+                    if (typeof saved.firstTimeUser === 'boolean') tutorialState.firstTimeUser = saved.firstTimeUser;
+                    if (typeof saved.showHints === 'boolean') tutorialState.showHints = saved.showHints;
+                    if (saved.hintLevel !== undefined) tutorialState.hintLevel = saved.hintLevel;
+                    if (typeof saved.enabled === 'boolean') tutorialState.enabled = saved.enabled;
+                    if (Number.isFinite(saved.currentStep)) tutorialState.currentStep = saved.currentStep;
+                }
+            } catch (e) {
+                console.warn("Failed to parse tutorial state:", e);
+            }
         }
+    } catch (e) {
+        console.warn("Failed to read tutorial state:", e);
     }
 
     if (tutorialState.firstTimeUser) {
@@ -164,18 +193,28 @@ export function showTutorialStep(stepId) {
     modal.className = "tutorial-modal";
     modal.innerHTML = `
         <div class="tutorial-content">
-            <h3>${step.title}</h3>
-            <p>${step.message}</p>
-            <div class="tutorial-buttons">
-                <button class="tutorial-btn primary" onclick="this.closest('.tutorial-modal').remove(); markTutorialComplete('${stepId}')">
-                    Got it
-                </button>
-                <button class="tutorial-btn secondary" onclick="this.closest('.tutorial-modal').remove()">
-                    Skip
-                </button>
-            </div>
+            <h3>${escapeHtml(step.title)}</h3>
+            <p>${escapeHtml(step.message)}</p>
+            <div class="tutorial-buttons"></div>
         </div>
     `;
+
+    const buttonContainer = modal.querySelector(".tutorial-buttons");
+    const gotItBtn = document.createElement("button");
+    gotItBtn.className = "tutorial-btn primary";
+    gotItBtn.textContent = "Got it";
+    gotItBtn.addEventListener("click", () => {
+        modal.remove();
+        markTutorialComplete(stepId);
+    });
+
+    const skipBtn = document.createElement("button");
+    skipBtn.className = "tutorial-btn secondary";
+    skipBtn.textContent = "Skip";
+    skipBtn.addEventListener("click", () => modal.remove());
+
+    buttonContainer.appendChild(gotItBtn);
+    buttonContainer.appendChild(skipBtn);
 
     document.body.appendChild(modal);
     console.log(`Tutorial shown: ${stepId}`);
@@ -186,7 +225,7 @@ export function markTutorialComplete(stepId) {
         tutorialState.completedSteps.push(stepId);
     }
 
-    localStorage.setItem("systemShiftTutorial", JSON.stringify(tutorialState));
+    safeSetItem("systemShiftTutorial", JSON.stringify(tutorialState));
     console.log(`Tutorial completed: ${stepId}`);
 }
 
@@ -221,19 +260,19 @@ export function triggerTutorialEvent(eventType) {
 
 export function toggleHints(enabled) {
     tutorialState.showHints = enabled;
-    localStorage.setItem("systemShiftTutorial", JSON.stringify(tutorialState));
+    safeSetItem("systemShiftTutorial", JSON.stringify(tutorialState));
 }
 
 export function setHintLevel(level) {
     tutorialState.hintLevel = level;
-    localStorage.setItem("systemShiftTutorial", JSON.stringify(tutorialState));
+    safeSetItem("systemShiftTutorial", JSON.stringify(tutorialState));
 }
 
 export function resetTutorial() {
     tutorialState.completedSteps = [];
     tutorialState.dismissedTips = [];
     tutorialState.firstTimeUser = true;
-    localStorage.setItem("systemShiftTutorial", JSON.stringify(tutorialState));
+    safeSetItem("systemShiftTutorial", JSON.stringify(tutorialState));
 }
 
 /* ================================================= */

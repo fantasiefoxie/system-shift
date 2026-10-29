@@ -2518,7 +2518,7 @@ body {
     min-height: 0;
     height: 100%;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     grid-auto-rows: minmax(0, 1fr);
     gap: 8px;
     padding: 0;
@@ -2538,6 +2538,8 @@ body {
 #hand.card-row .card-title {
     font-size: 0.76rem;
     margin-bottom: 5px;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 #hand.card-row .card-cost {

@@ -5,6 +5,7 @@
 
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
+import { random } from "./rng.js";
 
 /* ================================================= */
 /* HIDDEN TRACKS DEFINITION                         */
@@ -21,6 +22,12 @@ export const hiddenTracks = {
 /* Called at end of each round                       */
 /* ================================================= */
 
+export function resetHiddenTracks() {
+    hiddenTracks.eliteCohesion = 10;
+    hiddenTracks.movementMorale = 10;
+    hiddenTracks.internationalPressure = 5;
+}
+
 export function updateHiddenTracks() {
     const t = gameState.tracks;
 
@@ -35,7 +42,7 @@ export function updateHiddenTracks() {
     }
 
     // International pressure fluctuates
-    hiddenTracks.internationalPressure += Math.floor(Math.random() * 3) - 1;
+    hiddenTracks.internationalPressure += Math.floor(random() * 3) - 1;
     hiddenTracks.internationalPressure = Math.max(0, Math.min(10, hiddenTracks.internationalPressure));
 
     log("HIDDEN_TRACKS_UPDATED", {

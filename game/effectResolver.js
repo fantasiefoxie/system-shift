@@ -5,16 +5,13 @@
 /* ================================================= */
 
 import { gameState } from "./state.js";
-import { playCard } from "./round.js";
+import { playCard, applyEffects } from "./round.js";
 import { playSound } from "./audioManager.js";
 import { notify } from "./notificationCenter.js";
-import { 
-    getResource, 
-    consumeResource, 
-    addResource, 
-    applyOpportunityCosts, 
-    applyBurnMechanics, 
-    setupDelayedEffect 
+import {
+    getResource,
+    consumeResource,
+    addResource
 } from "./resourceManagement.js";
 import { 
     processCardInteractions, 
@@ -24,6 +21,11 @@ import {
 } from "./cardInteractions.js";
 
 let resolving = false;
+
+function capitalize(text) {
+    const value = String(text || "");
+    return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 /* ------------------------------------------------- */
 /* Utility Delay                                     */
@@ -128,6 +130,40 @@ export async function resolveCard(index, renderFn) {
 
         // Apply all interaction effects
         applyAllInteractions(interactions);
+
+        // Apply system-card random effect, if one was triggered
+        if (interactions.randomEffects && Object.keys(interactions.randomEffects).length > 0) {
+            const randomEffect = interactions.randomEffects;
+            applyEffects(randomEffect);
+
+            // Notify the player of the random effect outcome
+            const changes = Object.entries(randomEffect)
+                .filter(([, v]) => Number(v) !== 0)
+                .map(([key, value]) => {
+                    const v = Number(value) || 0;
+                    const sign = v > 0 ? "+" : "";
+                    return `${capitalize(key)} ${sign}${v}`;
+                });
+            if (changes.length > 0) {
+                notify({
+                    kind: "info",
+                    title: "System effect",
+                    message: changes.join(", "),
+                    duration: 2200
+                });
+            }
+
+            // Animate affected tracks / top-bar stats
+            for (const key in randomEffect) {
+                const value = Number(randomEffect[key]) || 0;
+                if (value === 0) continue;
+                if (key === "surge") {
+                    triggerTopBarAnimation("surge", value > 0);
+                } else if (gameState.tracks[key] !== undefined) {
+                    triggerStatAnimation(key, value > 0);
+                }
+            }
+        }
 
         if (typeof renderFn === "function") {
             renderFn();

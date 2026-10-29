@@ -29,7 +29,7 @@ import { getCurrentAct } from "./acts.js";
 import { addCardToDeck, removeCardFromDeck, removeCardsByTag } from "./deck.js";
 import { updateHiddenTracks } from "./hiddenTracks.js";
 import { checkMemory } from "./memory.js";
-import { checkThresholds } from "./thresholds.js";
+import { checkThresholds, thresholds } from "./thresholds.js";
 import { clearExpiredScouts } from "./scouting.js";
 import { resetNegotiationForAct } from "./negotiation.js";
 import { publishGameEvent } from "./uiEvents.js";
@@ -86,6 +86,11 @@ export function playCard(index) {
 
     applyEffects(card.effects || {});
 
+    // Mass Movement threshold: solidarity cards gain +1 solidarity
+    if (card.suit === "solidarity" && Array.isArray(gameState.activeThresholds) && gameState.activeThresholds.includes("mass_movement")) {
+        applyEffects({ solidarity: 1 });
+    }
+
     // Execute onPlay deck modifications
     if (card.onPlay) {
         if (card.onPlay.addCard) {
@@ -112,10 +117,28 @@ export function playCard(index) {
 
     // Track played card for Library (1C)
     try {
-        const playedCards = JSON.parse(localStorage.getItem("systemshift_played_cards") || "[]");
-        if (!playedCards.includes(card.id)) {
+        const raw = localStorage.getItem("systemshift_played_cards");
+        let playedCards = [];
+        let isValidShape = true;
+        try {
+            const parsed = JSON.parse(raw || "[]");
+            if (Array.isArray(parsed)) {
+                playedCards = parsed;
+            } else {
+                isValidShape = false;
+                console.warn("Played cards storage has invalid shape; skipping tracking.");
+            }
+        } catch (e) {
+            isValidShape = false;
+            console.warn("Failed to parse played cards:", e);
+        }
+        if (isValidShape && !playedCards.includes(card.id)) {
             playedCards.push(card.id);
-            localStorage.setItem("systemshift_played_cards", JSON.stringify(playedCards));
+            try {
+                localStorage.setItem("systemshift_played_cards", JSON.stringify(playedCards));
+            } catch (e) {
+                console.warn("Failed to save played card:", e);
+            }
         }
     } catch (e) {
         console.warn("Failed to track played card:", e);
@@ -130,7 +153,7 @@ export function playCard(index) {
 /* APPLY EFFECTS                                    */
 /* ================================================= */
 
-function applyEffects(effects) {
+export function applyEffects(effects) {
 
     for (let key in effects) {
 
@@ -246,6 +269,7 @@ export function endRound() {
 
     if (gameState.round >= gameState.maxRounds) {
         gameState.gameOver = true;
+        surgeDeltaThisRound = 0;
         log("GAME_OVER", { finalRound: gameState.round });
         return;
     }
@@ -467,6 +491,18 @@ export function endRound() {
     
     checkThresholds();
 
+    // Apply persistent per-round threshold effects (e.g. strain_per_round)
+    if (Array.isArray(gameState.activeThresholds)) {
+        gameState.activeThresholds.forEach(thresholdId => {
+            const threshold = thresholds.find(t => t.id === thresholdId);
+            if (threshold && threshold.effect === "strain_per_round") {
+                const value = Number(threshold.value) || 0;
+                if (value !== 0) {
+                    gameState.tracks.strain = Math.max(0, Math.min(20, gameState.tracks.strain + value));
+                }
+            }
+        });
+    }
     /* --------------------------------------------- */
     /* 7. RESET ROUND STATE                         */
     /* --------------------------------------------- */

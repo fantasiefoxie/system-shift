@@ -326,7 +326,13 @@
         if (app) {
             const errorDiv = document.createElement("div");
             errorDiv.style.cssText = "position:fixed;top:10px;right:10px;background:#ef4444;color:white;padding:20px;border-radius:8px;z-index:9999;max-width:400px;";
-            errorDiv.innerHTML = "<strong>JavaScript Error:</strong><br>" + (e.error?.message || e.message || "Unknown error");
+            const escapeHtml = (text) => String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+            errorDiv.innerHTML = "<strong>JavaScript Error:</strong><br>" + escapeHtml(e.error?.message || e.message || "Unknown error");
             app.appendChild(errorDiv);
         }
     });

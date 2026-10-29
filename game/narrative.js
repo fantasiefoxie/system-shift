@@ -8,6 +8,15 @@ import { getCurrentAct } from "./acts.js";
 import { log } from "./logger.js";
 import { publishGameEvent } from "./uiEvents.js";
 
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 /* ================================================= */
 /* NARRATIVE STATE                                  */
 /* ================================================= */
@@ -260,16 +269,58 @@ export const trackNarrative = {
 /* NARRATIVE FUNCTIONS                              */
 /* ================================================= */
 
+export function resetNarrativeState() {
+    narrativeState.storyBeats = [];
+    narrativeState.characterArcs = {};
+    narrativeState.factionRelations = {
+        elite: 0,
+        authoritarian: 0,
+        statusquo: 0
+    };
+    narrativeState.historicalEvents = [];
+    narrativeState.currentNarrative = null;
+    narrativeState.narrativeChoices = [];
+}
+
 export function initNarrative() {
+    // Reset runtime narrative state before loading any persisted data
+    resetNarrativeState();
+
     // Load saved narrative state
-    const saved = localStorage.getItem('systemShiftNarrative');
-    if (saved) {
-        Object.assign(narrativeState, JSON.parse(saved));
+    try {
+        const saved = localStorage.getItem('systemShiftNarrative');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    if (Array.isArray(parsed.storyBeats)) narrativeState.storyBeats = parsed.storyBeats;
+                    if (parsed.characterArcs && typeof parsed.characterArcs === 'object' && !Array.isArray(parsed.characterArcs)) {
+                        narrativeState.characterArcs = parsed.characterArcs;
+                    }
+                    if (parsed.factionRelations && typeof parsed.factionRelations === 'object' && !Array.isArray(parsed.factionRelations)) {
+                        ['elite', 'authoritarian', 'statusquo'].forEach(key => {
+                            if (typeof parsed.factionRelations[key] === 'number') {
+                                narrativeState.factionRelations[key] = parsed.factionRelations[key];
+                            }
+                        });
+                    }
+                    if (Array.isArray(parsed.historicalEvents)) narrativeState.historicalEvents = parsed.historicalEvents;
+                    if (parsed.currentNarrative && typeof parsed.currentNarrative === 'object' && !Array.isArray(parsed.currentNarrative)) {
+                        narrativeState.currentNarrative = parsed.currentNarrative;
+                    }
+                    if (Array.isArray(parsed.narrativeChoices)) narrativeState.narrativeChoices = parsed.narrativeChoices;
+                }
+            } catch (e) {
+                console.warn("Failed to parse narrative state:", e);
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to read narrative state:", e);
     }
-    
+
     // Trigger opening narrative
     triggerStoryBeat("act1_start");
-    
+
     log("NARRATIVE_INITIALIZED", {});
 }
 
@@ -304,12 +355,12 @@ export function showNarrativeModal(beat) {
     modal.className = 'narrative-modal';
     modal.innerHTML = `
         <div class="narrative-content">
-            <h3>${beat.title}</h3>
-            <p>${beat.description}</p>
+            <h3>${escapeHtml(beat.title)}</h3>
+            <p>${escapeHtml(beat.description)}</p>
             <div class="narrative-choices">
                 ${beat.choices.map((choice, index) => `
                     <button class="narrative-choice" data-choice="${index}">
-                        ${choice.text}
+                        ${escapeHtml(choice.text)}
                     </button>
                 `).join('')}
             </div>

@@ -13,6 +13,7 @@ import { resetPhaseTracking, checkSystemPhases } from "./game/phaseEngine.js";
 import { setSeed } from "./game/rng.js";
 import { initAmbientEngine } from "./game/ambientEngine.js";
 import { initInteractionState, addHiddenCards } from "./game/cardInteractions.js";
+import { resetHiddenTracks } from "./game/hiddenTracks.js";
 import { initResourceSystem } from "./game/resourceManagement.js";
 import { initOppositionSystem } from "./game/oppositionSystem.js";
 import { initOppositionActions } from "./game/oppositionActions.js";
@@ -34,7 +35,7 @@ import {
     getCardFlavor,
     getNarrativeSummary
 } from "./game/narrative.js";
-import { scoutFaction, getScoutResult } from "./game/scouting.js";
+import { scoutFaction, getScoutResult, resetScouting } from "./game/scouting.js";
 import { saveLegacy, getLegacyBonuses, getLegacy } from "./game/memory.js";
 import { canNegotiate, attemptNegotiation } from "./game/negotiation.js";
 import { checkAchievements, getUnlocks, achievements } from "./game/achievements.js";
@@ -388,7 +389,16 @@ function updatePhaseUi() {
 }
 
 function loadUiSettings() {
-    const saved = safeJsonParse(localStorage.getItem(UI_SETTINGS_KEY), DEFAULT_UI_SETTINGS);
+    let saved = DEFAULT_UI_SETTINGS;
+    try {
+        const raw = localStorage.getItem(UI_SETTINGS_KEY);
+        const parsed = safeJsonParse(raw, DEFAULT_UI_SETTINGS);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            saved = parsed;
+        }
+    } catch (e) {
+        console.warn("Failed to read UI settings:", e);
+    }
     gameState.ui.pacingMode = saved.pacingMode || DEFAULT_UI_SETTINGS.pacingMode;
     gameState.ui.orientationMode = normalizeOrientationMode(saved.orientationMode || DEFAULT_UI_SETTINGS.orientationMode);
     gameState.ui.markerVerbosity = saved.markerVerbosity || DEFAULT_UI_SETTINGS.markerVerbosity;
@@ -398,12 +408,16 @@ function loadUiSettings() {
 }
 
 function saveUiSettings() {
-    localStorage.setItem(UI_SETTINGS_KEY, JSON.stringify({
-        pacingMode: gameState.ui.pacingMode,
-        orientationMode: gameState.ui.orientationMode,
-        markerVerbosity: gameState.ui.markerVerbosity,
-        feedCap: gameState.ui.feed.maxItems
-    }));
+    try {
+        localStorage.setItem(UI_SETTINGS_KEY, JSON.stringify({
+            pacingMode: gameState.ui.pacingMode,
+            orientationMode: gameState.ui.orientationMode,
+            markerVerbosity: gameState.ui.markerVerbosity,
+            feedCap: gameState.ui.feed.maxItems
+        }));
+    } catch (e) {
+        console.warn("Failed to save UI settings:", e);
+    }
 }
 
 document.querySelectorAll(".scout-btn").forEach(btn => {
@@ -611,13 +625,77 @@ function startGame() {
         leverage: startingLeverage,
         surge: 0,
         playerHand: [],
-        discardPile: []
+        discardPile: [],
+        tracks: {
+            care: 8,
+            climate: 8,
+            solidarity: 6,
+            authority: 10,
+            capital: 20,
+            strain: 10
+        },
+        pushback: {
+            revealed: false,
+            eliteResistance: 0,
+            transitionShock: 0,
+            value: 0
+        },
+        structuralPushback: 0,
+        surfacePushback: 0,
+        memory: {
+            maxCare: 8,
+            maxClimate: 8,
+            cardsPlayed: [],
+            eventsChosen: []
+        },
+        delayedEffects: [],
+        tagsPlayedThisRound: [],
+        hiddenTracks: {
+            eliteCohesion: 10,
+            movementMorale: 10,
+            internationalPressure: 5
+        },
+        revealed: {
+            hiddenTracks: false,
+            nextCards: [],
+            nextEliteAction: null
+        },
+        activeThresholds: [],
+        negotiation: {
+            usedThisAct: [],
+            history: []
+        },
+        narrative: {
+            storyBeats: [],
+            characterArcs: {},
+            factionRelations: {
+                elite: 0,
+                authoritarian: 0,
+                statusquo: 0
+            },
+            historicalEvents: [],
+            currentNarrative: null,
+            narrativeChoices: []
+        },
+        ui: {
+            roundPhase: "PLAYING",
+            pacingMode: gameState.ui?.pacingMode || "standard",
+            orientationMode: gameState.ui?.orientationMode || "portrait",
+            markerVerbosity: gameState.ui?.markerVerbosity || "normal",
+            feed: {
+                items: [],
+                maxItems: gameState.ui?.feed?.maxItems || 40,
+                markerVerbosity: gameState.ui?.feed?.markerVerbosity || "normal"
+            }
+        }
     });
 
-    gameState.ui.roundPhase = ROUND_PHASES.PLAYING;
     clearTransitionTimers();
     hideTransitionPanel();
     latestRoundSummary = null;
+    gameOverRecorded = false;
+    resetHiddenTracks();
+    resetScouting();
 
     initResourceSystem();
     initInteractionState();
@@ -670,7 +748,10 @@ function getDefaultStats() {
 
 function recordGameStats(endingType) {
     try {
-        const stats = safeJsonParse(localStorage.getItem("systemshift_stats"), getDefaultStats());
+        let stats = safeJsonParse(localStorage.getItem("systemshift_stats"), getDefaultStats());
+        if (!stats || typeof stats !== 'object' || Array.isArray(stats)) {
+            stats = getDefaultStats();
+        }
         stats.games += 1;
 
         const isWin = !["SYSTEM COLLAPSE", "AUTHORITARIAN CONSOLIDATION"].includes(endingType);
@@ -706,7 +787,15 @@ function recordGameStats(endingType) {
 }
 
 function renderStats() {
-    const stats = safeJsonParse(localStorage.getItem("systemshift_stats"), getDefaultStats());
+    let stats = getDefaultStats();
+    try {
+        const parsed = safeJsonParse(localStorage.getItem("systemshift_stats"), getDefaultStats());
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            stats = parsed;
+        }
+    } catch (e) {
+        console.warn("Failed to read stats:", e);
+    }
     const winRate = stats.games > 0 ? ((stats.wins / stats.games) * 100).toFixed(1) : "0.0";
 
     let html = "";
@@ -735,7 +824,7 @@ function renderStats() {
         const width = (count / maxEndingCount) * 100;
         const color = endingColors[ending] || "#94a3b8";
         html += `<div class="stats-bar-row">`;
-        html += `<span class="stats-bar-label">${ending}</span>`;
+        html += `<span class="stats-bar-label">${escapeHtml(ending)}</span>`;
         html += `<div class="stats-bar-track"><div class="stats-bar-fill" style="width:${width}%;background:${color}"></div></div>`;
         html += `<span class="stats-bar-count">${count} (${pct}%)</span>`;
         html += `</div>`;
@@ -748,7 +837,7 @@ function renderStats() {
         topCards.forEach(([id, count], idx) => {
             const card = baseDeck.find(c => c.id === Number(id));
             const title = card ? card.title : `Card #${id}`;
-            html += `<div class="stats-card-row"><span class="stats-card-rank">${idx + 1}.</span><span class="stats-card-title">${title}</span><span class="stats-card-count">${count} plays</span></div>`;
+            html += `<div class="stats-card-row"><span class="stats-card-rank">${idx + 1}.</span><span class="stats-card-title">${escapeHtml(title)}</span><span class="stats-card-count">${count} plays</span></div>`;
         });
         html += `</div>`;
     }
@@ -772,7 +861,11 @@ function hideStats() {
 
 function resetStats() {
     if (confirm("Are you sure you want to reset all statistics? This cannot be undone.")) {
-        localStorage.removeItem("systemshift_stats");
+        try {
+            localStorage.removeItem("systemshift_stats");
+        } catch (e) {
+            console.warn("Failed to reset stats:", e);
+        }
         renderStats();
     }
 }
@@ -787,7 +880,13 @@ if (statsModal) {
 }
 
 function renderLibrary() {
-    const playedCards = safeJsonParse(localStorage.getItem("systemshift_played_cards"), []);
+    let playedCards = [];
+    try {
+        const parsed = safeJsonParse(localStorage.getItem("systemshift_played_cards"), []);
+        if (Array.isArray(parsed)) playedCards = parsed;
+    } catch (e) {
+        console.warn("Failed to read played cards:", e);
+    }
     const suitOrder = ["care", "climate", "solidarity", "authority", "capital", "system", "risk", "hidden"];
     const suitLabels = {
         care: "Care",
@@ -814,17 +913,17 @@ function renderLibrary() {
             const effectsHTML = Object.entries(card.effects || {}).map(([key, value]) => {
                 const sign = value > 0 ? "+" : "";
                 const cls = value >= 0 ? "pos" : "neg";
-                return `<div class="${cls}">${sign}${value} ${capitalize(key)}</div>`;
+                return `<div class="${cls}">${sign}${value} ${escapeHtml(capitalize(key))}</div>`;
             }).join("");
 
-            const tagsHTML = card.tags ? `<div class="library-card-tags">${card.tags.join(", ")}</div>` : "";
+            const tagsHTML = card.tags ? `<div class="library-card-tags">${card.tags.map(tag => escapeHtml(tag)).join(", ")}</div>` : "";
             const synergyHTML = card.synergy
-                ? `<div class="library-card-synergy">Synergy: ${card.synergy.if_played_this_round.join(", ")}</div>`
+                ? `<div class="library-card-synergy">Synergy: ${card.synergy.if_played_this_round.map(item => escapeHtml(item)).join(", ")}</div>`
                 : "";
 
             html += `
                 <div class="library-card ${seenClass} suit-${card.suit}">
-                    <div class="card-title">${card.title}</div>
+                    <div class="card-title">${escapeHtml(card.title)}</div>
                     <div class="card-cost">Cost: ${card.cost}</div>
                     <div class="card-effects">${effectsHTML}</div>
                     ${tagsHTML}
@@ -1187,26 +1286,47 @@ function renderTracksSequenced() {
     previousTrackValues = { ...gameState.tracks };
 }
 
+let gameOverRecorded = false;
+
+function resetGameOverRecorded() {
+    gameOverRecorded = false;
+}
+
 function renderHand() {
     if (!handDiv) return;
     handDiv.innerHTML = "";
 
     if (gameState.gameOver) {
         const ending = evaluateOutcome(gameState);
-        recordGameStats(ending.type);
-        saveLegacy(ending.type);
 
-        const stats = safeJsonParse(localStorage.getItem("systemshift_stats"), {});
-        const newAchievements = checkAchievements(stats);
-        newAchievements.forEach((achievement, index) => {
-            setTimeout(() => showAchievementToast(achievement), index * 650);
-        });
+        if (!gameOverRecorded) {
+            gameOverRecorded = true;
+            recordGameStats(ending.type);
+            saveLegacy(ending.type);
+
+            let stats = {};
+            try {
+                const parsed = safeJsonParse(localStorage.getItem("systemshift_stats"), {});
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) stats = parsed;
+            } catch (e) {
+                console.warn("Failed to read stats:", e);
+            }
+            let newAchievements = [];
+            try {
+                newAchievements = checkAchievements(stats);
+            } catch (e) {
+                console.warn("Failed to check achievements:", e);
+            }
+            newAchievements.forEach((achievement, index) => {
+                setTimeout(() => showAchievementToast(achievement), index * 650);
+            });
+        }
 
         handDiv.innerHTML = `
             <div class="game-over">
                 <h2>End Of Cycle</h2>
-                <div class="ending-type">${ending.type}</div>
-                <div class="ending-message">${ending.message}</div>
+                <div class="ending-type">${escapeHtml(ending.type)}</div>
+                <div class="ending-message">${escapeHtml(ending.message)}</div>
                 <button id="restartBtn">Restart</button>
             </div>
         `;
@@ -1229,7 +1349,7 @@ function renderHand() {
         const effectsHTML = Object.entries(card.effects || {}).map(([key, value]) => {
             const sign = value > 0 ? "+" : "";
             const cls = value >= 0 ? "pos" : "neg";
-            return `<div class="${cls}">${sign}${value} ${capitalize(key)}</div>`;
+            return `<div class="${cls}">${sign}${value} ${escapeHtml(capitalize(key))}</div>`;
         }).join("");
 
         const flavor = getCardFlavor(card.id);
@@ -1248,7 +1368,7 @@ function renderHand() {
                     : "Need Leverage";
 
         cardDiv.innerHTML = `
-            <div class="card-title">${card.title}</div>
+            <div class="card-title">${escapeHtml(card.title)}</div>
             <div class="card-cost ${!canAfford ? "cost-error" : ""}">Cost: ${card.cost}</div>
             <div class="card-effects">${effectsHTML}</div>
             ${flavorHtml}
@@ -1284,7 +1404,7 @@ function renderAchievements() {
         const unlocked = unlocks.achievements?.[achievement.id];
         if (unlocked) {
             const date = new Date(unlocked.unlockedAt).toLocaleDateString();
-            html += `<div class="achievement-card unlocked"><div class="achievement-name">Unlocked: ${achievement.name}</div><div class="achievement-desc">${achievement.desc}</div><div class="achievement-date">${date}</div></div>`;
+            html += `<div class="achievement-card unlocked"><div class="achievement-name">Unlocked: ${escapeHtml(achievement.name)}</div><div class="achievement-desc">${escapeHtml(achievement.desc)}</div><div class="achievement-date">${escapeHtml(date)}</div></div>`;
         } else {
             html += `<div class="achievement-card locked"><div class="achievement-name">Locked: ???</div></div>`;
         }
@@ -1348,3 +1468,5 @@ try {
         app.appendChild(errorDiv);
     }
 }
+
+export { renderHand, resetGameOverRecorded, startGame, handleEndRound };

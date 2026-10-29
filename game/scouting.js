@@ -44,15 +44,6 @@ const factionIntents = {
 /* ================================================= */
 
 export function scoutFaction(factionId) {
-    // Check if player has enough surge
-    if (gameState.surge < 3) {
-        log("SCOUT_FAILED", { faction: factionId, reason: "insufficient_surge", available: gameState.surge });
-        return false;
-    }
-
-    // Deduct cost
-    gameState.surge -= 3;
-
     // Get faction state
     const factionState = gameState.opposition?.factions?.[factionId];
     const factionDef = Object.values(factions).find(f => f.id === factionId);
@@ -61,6 +52,15 @@ export function scoutFaction(factionId) {
         log("SCOUT_FAILED", { faction: factionId, reason: "faction_not_found" });
         return false;
     }
+
+    // Check if player has enough surge
+    if (gameState.surge < 3) {
+        log("SCOUT_FAILED", { faction: factionId, reason: "insufficient_surge", available: gameState.surge });
+        return false;
+    }
+
+    // Deduct cost
+    gameState.surge -= 3;
 
     // Generate intent based on faction threat level and active status
     let intent;

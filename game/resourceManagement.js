@@ -5,6 +5,7 @@
 
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
+import { random } from "./rng.js";
 
 /* ================================================= */
 /* RESOURCE DEFINITIONS                              */
@@ -183,8 +184,8 @@ export function applyBurnMechanics(card) {
     
     // Major cards may burn resources
     if (card.tags && card.tags.includes("major")) {
-        if (Math.random() < 0.3) { // 30% chance to burn
-            const burnType = Math.random() < 0.5 ? "political" : "social";
+        if (random() < 0.3) { // 30% chance to burn
+            const burnType = random() < 0.5 ? "political" : "social";
             burns.push({
                 type: burnType,
                 amount: 1,
@@ -195,7 +196,7 @@ export function applyBurnMechanics(card) {
     
     // Risk cards have burn potential
     if (card.suit === "risk") {
-        if (Math.random() < 0.4) { // 40% chance to burn
+        if (random() < 0.4) { // 40% chance to burn
             burns.push({
                 type: "momentum",
                 amount: 2,
@@ -312,7 +313,19 @@ export function calculateDynamicRecovery() {
 
 export function applyResourceRecovery() {
     const recovery = calculateDynamicRecovery();
-    
+
+    // Apply opposition recovery penalty (recovery_slow), if any.
+    // The penalty applies to the next recovery phase only, then clears.
+    // It does not stack: a new penalty overwrites with a single value of 2.
+    const penalty = Number(gameState.resourceState?.recoveryPenalty) || 0;
+    if (penalty > 0) {
+        Object.keys(recovery).forEach(resourceType => {
+            if (recovery[resourceType] > 0) {
+                recovery[resourceType] = Math.max(0, recovery[resourceType] - penalty);
+            }
+        });
+    }
+
     // Apply recovery with caps
     Object.entries(recovery).forEach(([resourceType, amount]) => {
         if (amount > 0) {
@@ -330,7 +343,12 @@ export function applyResourceRecovery() {
     
     // Apply infrastructure maintenance
     applyInfrastructureMaintenance();
-    
+
+    // Consume the recovery penalty after it has been applied
+    if (penalty > 0 && gameState.resourceState) {
+        gameState.resourceState.recoveryPenalty = 0;
+    }
+
     log("RESOURCE_RECOVERY", {
         recovery,
         momentumDecay: gameState.resourceState.momentumDecay,
@@ -417,51 +435,4 @@ export function resetResourceState() {
     gameState.resourceState.infrastructureMaintenance = 0;
     gameState.resourceState.resourceBonuses = {};
     gameState.resourceState.resourcePenalties = {};
-}
-
-export function applyResourceModifiers() {
-    // Apply temporary bonuses/penalties
-    Object.entries(gameState.resourceState.resourceBonuses).forEach(([resourceType, bonus]) => {
-        addResource(resourceType, bonus);
-    });
-    
-    Object.entries(gameState.resourceState.resourcePenalties).forEach(([resourceType, penalty]) => {
-        consumeResource(resourceType, penalty);
-    });
-    
-    // Clear modifiers after application
-    gameState.resourceState.resourceBonuses = {};
-    gameState.resourceState.resourcePenalties = {};
-}
-
-/* ================================================= */
-/* UTILITY FUNCTIONS                                 */
-/* ================================================= */
-
-export function getResourceStatus() {
-    return {
-        current: { ...gameState.resources },
-        max: {
-            political: resourceTypes.POLITICAL_CAPITAL.max,
-            social: resourceTypes.SOCIAL_CAPITAL.max,
-            momentum: resourceTypes.MOMENTUM.max,
-            infrastructure: resourceTypes.INFRASTRUCTURE.max
-        },
-        state: { ...gameState.resourceState }
-    };
-}
-
-export function getEffectiveResourceAmount(resourceType) {
-    let amount = getResource(resourceType);
-    
-    // Apply temporary modifiers
-    if (gameState.resourceState.resourceBonuses[resourceType]) {
-        amount += gameState.resourceState.resourceBonuses[resourceType];
-    }
-    
-    if (gameState.resourceState.resourcePenalties[resourceType]) {
-        amount -= gameState.resourceState.resourcePenalties[resourceType];
-    }
-    
-    return Math.max(0, amount);
 }

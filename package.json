@@ -6,6 +6,5 @@
   "main": "main.js",
   "scripts": {
     "start": "python -m http.server 8080",
-    "test": "node test-event-surface.js && node test-round-flow.js"
-  }
+    "test": "node test-event-surface.js && node test-round-flow.js && node test-security-hardening.js && node test-rng-determinism.js && node test-gameover-guard.js && node test-handleendround-guard.js && node test-state-reset.js && node test-scouting.js && node test-card-clamping.js && node test-surge-delta.js && node test-random-effect-application.js && node test-threshold-strain.js && node test-solidarity-bonus.js && node test-recovery-penalty.js && node test-multiround-lifecycle.js && node test-hidden-card-lifecycle.js && node test-hidden-card-shuffle.js && node test-random-effect-feedback.js"  }
 }

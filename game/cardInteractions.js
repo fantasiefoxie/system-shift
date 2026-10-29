@@ -6,6 +6,8 @@
 import { gameState } from "./state.js";
 import { log } from "./logger.js";
 import { publishGameEvent } from "./uiEvents.js";
+import { random } from "./rng.js";
+import { shuffleDeck } from "./deck.js";
 
 /* ================================================= */
 /* CARD INTERACTION DEFINITIONS                      */
@@ -162,9 +164,8 @@ export function applyComboBonus(bonus) {
             gameState.surge += value;
         } else if (gameState.tracks[key] !== undefined) {
             gameState.tracks[key] += value;
-            if (key === "authority" || key === "capital") {
-                gameState.tracks[key] = Math.max(0, gameState.tracks[key]);
-            }
+            // Balance: Clamp all tracks to [0, 20] to prevent overflow
+            gameState.tracks[key] = Math.max(0, Math.min(20, gameState.tracks[key]));
         }
     }
     
@@ -210,9 +211,8 @@ export function applySynergyBonus(bonus) {
     for (let [key, value] of Object.entries(bonus)) {
         if (gameState.tracks[key] !== undefined) {
             gameState.tracks[key] += value;
-            if (key === "authority" || key === "capital") {
-                gameState.tracks[key] = Math.max(0, gameState.tracks[key]);
-            }
+            // Balance: Clamp all tracks to [0, 20] to prevent overflow
+            gameState.tracks[key] = Math.max(0, Math.min(20, gameState.tracks[key]));
         }
     }
     
@@ -278,7 +278,8 @@ export function applyCounterPenalty(penalty) {
             gameState.surge += value;
         } else if (gameState.tracks[key] !== undefined) {
             gameState.tracks[key] += value;
-            gameState.tracks[key] = Math.max(0, gameState.tracks[key]);
+            // Balance: Clamp all tracks to [0, 20] to prevent overflow
+            gameState.tracks[key] = Math.max(0, Math.min(20, gameState.tracks[key]));
         }
     }
     
@@ -354,34 +355,32 @@ export function revealHiddenCard(index) {
 /* ================================================= */
 
 export function applyRandomEffects(card) {
-    const effects = { ...card.effects };
-    
-    // Add random variance to certain effects
-    if (card.suit === "system") {
-        // System cards have 30% chance of random effects
-        if (Math.random() < 0.3) {
-            const randomEffect = getRandomSystemEffect();
-            Object.assign(effects, randomEffect);
-            
-            log("RANDOM_EFFECT_TRIGGERED", { 
-                cardId: card.id, 
-                randomEffect 
-            });
-        }
+    // System cards have a 30% chance of an additional random effect
+    if (card.suit !== "system") return null;
+
+    if (random() < 0.3) {
+        const randomEffect = getRandomSystemEffect();
+
+        log("RANDOM_EFFECT_TRIGGERED", {
+            cardId: card.id,
+            randomEffect
+        });
+
+        return randomEffect;
     }
-    
-    return effects;
+
+    return null;
 }
 
 function getRandomSystemEffect() {
     const effects = [
-        { strain: Math.floor(Math.random() * 3) - 1 }, // -1 to +2 strain
-        { surge: Math.floor(Math.random() * 3) - 1 },  // -1 to +2 surge
-        { capital: Math.floor(Math.random() * 3) - 1 }, // -1 to +2 capital
-        { authority: Math.floor(Math.random() * 2) - 1 } // -1 to +1 authority
+        { strain: Math.floor(random() * 3) - 1 }, // -1 to +2 strain
+        { surge: Math.floor(random() * 3) - 1 },  // -1 to +2 surge
+        { capital: Math.floor(random() * 3) - 1 }, // -1 to +2 capital
+        { authority: Math.floor(random() * 2) - 1 } // -1 to +1 authority
     ];
-    
-    return effects[Math.floor(Math.random() * effects.length)];
+
+    return effects[Math.floor(random() * effects.length)];
 }
 
 /* ================================================= */
