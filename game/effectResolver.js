@@ -52,7 +52,15 @@ export async function resolveCard(index, renderFn) {
         // Handle hidden card reveal
         if (card.hidden) {
             const revealedCard = revealHiddenCard(index);
-            if (!revealedCard) return;
+            if (!revealedCard) {
+                notify({
+                    kind: "warning",
+                    title: "Nothing to reveal",
+                    message: "This face-down card has no backing draw. It stays in your hand.",
+                    duration: 2400
+                });
+                return;
+            }
             
             // Update hand with revealed card
             gameState.playerHand[index] = revealedCard;

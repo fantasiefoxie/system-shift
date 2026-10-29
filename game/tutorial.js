@@ -184,10 +184,43 @@ export function initTutorial() {
     }
 }
 
-export function showTutorialStep(stepId) {
+function isVisibleModal(el) {
+    if (!el) return false;
+    if (el.style && el.style.display === "none") return false;
+    if (typeof getComputedStyle === "function") {
+        const styles = getComputedStyle(el);
+        return styles.display !== "none" && styles.visibility !== "hidden";
+    }
+    return true;
+}
+
+const pendingTutorialSteps = new Set();
+
+export function showTutorialStep(stepId, attempt = 0) {
     const step = tutorialSteps.find(s => s.id === stepId);
-    if (!step || tutorialState.completedSteps.includes(stepId)) return;
-    if (document.querySelector(".tutorial-modal")) return;
+    if (!step || tutorialState.completedSteps.includes(stepId)) {
+        pendingTutorialSteps.delete(stepId);
+        return;
+    }
+
+    // Collapse duplicate triggers (init + game-start event) into one pending request.
+    if (attempt === 0) {
+        if (pendingTutorialSteps.has(stepId)) return;
+        pendingTutorialSteps.add(stepId);
+    }
+
+    const hasOpenModal = Array.from(document.querySelectorAll(".tutorial-modal, .narrative-modal")).some(isVisibleModal);
+    if (hasOpenModal) {
+        // Another modal is on screen; try again shortly instead of stacking or skipping the tutorial.
+        if (attempt < 15) {
+            setTimeout(() => showTutorialStep(stepId, attempt + 1), 700);
+        } else {
+            pendingTutorialSteps.delete(stepId);
+        }
+        return;
+    }
+
+    pendingTutorialSteps.delete(stepId);
 
     const modal = document.createElement("div");
     modal.className = "tutorial-modal";

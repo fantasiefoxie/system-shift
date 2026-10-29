@@ -691,6 +691,12 @@ function startGame() {
     });
 
     clearTransitionTimers();
+    clearAchievementToastTimers();
+    const appEl = document.getElementById("app");
+    if (appEl) appEl.scrollTop = 0;
+    if (typeof window !== "undefined" && typeof window.scrollTo === "function") {
+        window.scrollTo(0, 0);
+    }
     hideTransitionPanel();
     latestRoundSummary = null;
     gameOverRecorded = false;
@@ -702,7 +708,7 @@ function startGame() {
     initOppositionSystem();
     initOppositionActions();
     initTutorial();
-    initNarrative();
+    initNarrative({ loadPersisted: false });
 
     previousTrackValues = {};
     gameState.deck = shuffleDeck([...baseDeck]);
@@ -1287,6 +1293,12 @@ function renderTracksSequenced() {
 }
 
 let gameOverRecorded = false;
+const achievementToastTimers = [];
+
+function clearAchievementToastTimers() {
+    achievementToastTimers.forEach(timer => clearTimeout(timer));
+    achievementToastTimers.length = 0;
+}
 
 function resetGameOverRecorded() {
     gameOverRecorded = false;
@@ -1318,7 +1330,9 @@ function renderHand() {
                 console.warn("Failed to check achievements:", e);
             }
             newAchievements.forEach((achievement, index) => {
-                setTimeout(() => showAchievementToast(achievement), index * 650);
+                achievementToastTimers.push(
+                    setTimeout(() => showAchievementToast(achievement), index * 650)
+                );
             });
         }
 

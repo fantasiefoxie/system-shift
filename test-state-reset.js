@@ -65,8 +65,15 @@ gameState.gameOver = true;
 const firstTracksRef = gameState.tracks;
 const firstMemoryRef = gameState.memory;
 
-// Make storage setup explicit: empty persisted narrative for the second game.
-store.delete("systemShiftNarrative");
+// Seed stale persisted narrative from a previous game; a fresh start must ignore it.
+store.set("systemShiftNarrative", JSON.stringify({
+    storyBeats: ["act3_end"],
+    characterArcs: { staleArc: 4 },
+    factionRelations: { elite: 9, authoritarian: 9, statusquo: 9 },
+    historicalEvents: [{ id: "stale-event" }],
+    currentNarrative: { title: "Legacy" },
+    narrativeChoices: [{ beatId: "act3_end", choice: "stale", effects: {} }]
+}));
 
 // Seed module-level state with non-default values to prove reset occurs.
 narrativeState.storyBeats = ["seeded-beat"];
@@ -96,10 +103,13 @@ assert.equal(hiddenTracks.internationalPressure, 5, "module hiddenTracks reset")
 assert.deepEqual(scoutedFactions, {}, "scoutedFactions reset between games");
 assert.equal(gameState.revealed.hiddenTracks, false, "revealed reset");
 assert.deepEqual(gameState.activeThresholds, [], "activeThresholds reset");
-// Module-level narrative state is reset, then act1_start triggers on empty storage.
+// Module-level narrative state is reset, then act1_start triggers on a fresh start.
 assert.deepEqual(narrativeState.storyBeats, ["act1_start"], "narrativeState reset and act1_start triggered");
 assert.ok(!narrativeState.historicalEvents.includes("seeded-event"), "seeded narrative event cleared");
+assert.ok(!narrativeState.storyBeats.includes("act3_end"), "stale persisted story beats ignored on restart");
 assert.equal(narrativeState.currentNarrative.title, "The Movement Begins", "narrativeState currentNarrative reset");
+assert.deepEqual(narrativeState.factionRelations, { elite: 0, authoritarian: 0, statusquo: 0 }, "stale persisted faction relations ignored");
+assert.equal(narrativeState.narrativeChoices.length, 0, "stale persisted narrative choices ignored");
 assert.deepEqual(gameState.negotiation, { usedThisAct: [], history: [] }, "negotiation reset");
 assert.deepEqual(gameState.narrative, { storyBeats: [], characterArcs: {}, factionRelations: { elite: 0, authoritarian: 0, statusquo: 0 }, historicalEvents: [], currentNarrative: null, narrativeChoices: [] }, "gameState.narrative reset");
 assert.ok(!gameState.ui.feed.items.some(i => i.id === "x"), "previous feed items cleared");

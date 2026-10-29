@@ -282,40 +282,42 @@ export function resetNarrativeState() {
     narrativeState.narrativeChoices = [];
 }
 
-export function initNarrative() {
+export function initNarrative({ loadPersisted = true } = {}) {
     // Reset runtime narrative state before loading any persisted data
     resetNarrativeState();
 
     // Load saved narrative state
-    try {
-        const saved = localStorage.getItem('systemShiftNarrative');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                    if (Array.isArray(parsed.storyBeats)) narrativeState.storyBeats = parsed.storyBeats;
-                    if (parsed.characterArcs && typeof parsed.characterArcs === 'object' && !Array.isArray(parsed.characterArcs)) {
-                        narrativeState.characterArcs = parsed.characterArcs;
+    if (loadPersisted) {
+        try {
+            const saved = localStorage.getItem('systemShiftNarrative');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                        if (Array.isArray(parsed.storyBeats)) narrativeState.storyBeats = parsed.storyBeats;
+                        if (parsed.characterArcs && typeof parsed.characterArcs === 'object' && !Array.isArray(parsed.characterArcs)) {
+                            narrativeState.characterArcs = parsed.characterArcs;
+                        }
+                        if (parsed.factionRelations && typeof parsed.factionRelations === 'object' && !Array.isArray(parsed.factionRelations)) {
+                            ['elite', 'authoritarian', 'statusquo'].forEach(key => {
+                                if (typeof parsed.factionRelations[key] === 'number') {
+                                    narrativeState.factionRelations[key] = parsed.factionRelations[key];
+                                }
+                            });
+                        }
+                        if (Array.isArray(parsed.historicalEvents)) narrativeState.historicalEvents = parsed.historicalEvents;
+                        if (parsed.currentNarrative && typeof parsed.currentNarrative === 'object' && !Array.isArray(parsed.currentNarrative)) {
+                            narrativeState.currentNarrative = parsed.currentNarrative;
+                        }
+                        if (Array.isArray(parsed.narrativeChoices)) narrativeState.narrativeChoices = parsed.narrativeChoices;
                     }
-                    if (parsed.factionRelations && typeof parsed.factionRelations === 'object' && !Array.isArray(parsed.factionRelations)) {
-                        ['elite', 'authoritarian', 'statusquo'].forEach(key => {
-                            if (typeof parsed.factionRelations[key] === 'number') {
-                                narrativeState.factionRelations[key] = parsed.factionRelations[key];
-                            }
-                        });
-                    }
-                    if (Array.isArray(parsed.historicalEvents)) narrativeState.historicalEvents = parsed.historicalEvents;
-                    if (parsed.currentNarrative && typeof parsed.currentNarrative === 'object' && !Array.isArray(parsed.currentNarrative)) {
-                        narrativeState.currentNarrative = parsed.currentNarrative;
-                    }
-                    if (Array.isArray(parsed.narrativeChoices)) narrativeState.narrativeChoices = parsed.narrativeChoices;
+                } catch (e) {
+                    console.warn("Failed to parse narrative state:", e);
                 }
-            } catch (e) {
-                console.warn("Failed to parse narrative state:", e);
             }
+        } catch (e) {
+            console.warn("Failed to read narrative state:", e);
         }
-    } catch (e) {
-        console.warn("Failed to read narrative state:", e);
     }
 
     // Trigger opening narrative
