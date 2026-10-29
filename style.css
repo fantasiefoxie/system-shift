@@ -2542,6 +2542,13 @@ body {
     word-break: break-word;
 }
 
+/* Reserve headroom so the 8px card hover lift is not clipped by the hand. */
+@media (min-width: 561px) {
+    #hand.card-row {
+        padding-top: 10px;
+    }
+}
+
 #hand.card-row .card-cost {
     font-size: 0.66rem;
     margin-bottom: 5px;
@@ -4150,7 +4157,10 @@ body {
         padding: var(--space-xs);
         scroll-snap-align: start;
     }
+}
 
+/* Two-line titles are needed once the responsive hand compresses cards (tablet and below). */
+@media (max-width: 980px) {
     #hand.card-row .card-title {
         white-space: normal;
         text-overflow: clip;
@@ -4821,4 +4831,13 @@ button:active:not(:disabled) {
 #hand.card-row.game-over-active {
     grid-template-columns: minmax(0, 1fr);
     overflow-x: hidden;
+}
+
+/* Mobile: raise primary action targets toward the 44px touch guidance. */
+@media (max-width: 760px) {
+    .card .play-btn,
+    #nextRoundBtn,
+    .transition-actions button {
+        min-height: 44px;
+    }
 }
