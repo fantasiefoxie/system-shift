@@ -34,6 +34,12 @@ export const narrativeState = {
     narrativeChoices: []
 };
 
+let narrativeRefreshHandler = null;
+
+export function setNarrativeRefreshHandler(handler) {
+    narrativeRefreshHandler = typeof handler === "function" ? handler : null;
+}
+
 /* ================================================= */
 /* STORY BEATS                                      */
 /* ================================================= */
@@ -370,13 +376,27 @@ export function showNarrativeModal(beat) {
     `;
     
     document.body.appendChild(modal);
-    
+
     // Add event listeners
-    modal.querySelectorAll('.narrative-choice').forEach(btn => {
+    let choiceResolved = false;
+    const choiceButtons = Array.from(modal.querySelectorAll('.narrative-choice'));
+    choiceButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            const choiceIndex = parseInt(btn.dataset.choice);
-            applyNarrativeChoice(beat, beat.choices[choiceIndex]);
+            if (choiceResolved) return;
+            const choiceIndex = parseInt(btn.dataset.choice, 10);
+            const choice = beat.choices[choiceIndex];
+            if (!choice) return;
+
+            choiceResolved = true;
+            choiceButtons.forEach(button => {
+                button.disabled = true;
+            });
+
+            applyNarrativeChoice(beat, choice);
             modal.remove();
+            if (narrativeRefreshHandler) {
+                narrativeRefreshHandler({ beat, choice });
+            }
         });
     });
 }

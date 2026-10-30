@@ -33,7 +33,8 @@ import {
     checkNarrativeTriggers,
     getTrackNarrative,
     getCardFlavor,
-    getNarrativeSummary
+    getNarrativeSummary,
+    setNarrativeRefreshHandler
 } from "./game/narrative.js";
 import { scoutFaction, getScoutResult, resetScouting } from "./game/scouting.js";
 import { saveLegacy, getLegacyBonuses, getLegacy } from "./game/memory.js";
@@ -708,6 +709,7 @@ function startGame() {
     initOppositionSystem();
     initOppositionActions();
     initTutorial();
+    setNarrativeRefreshHandler(refreshAfterNarrativeChoice);
     initNarrative({ loadPersisted: false });
 
     previousTrackValues = {};
@@ -1290,6 +1292,16 @@ function renderTracksSequenced() {
     });
 
     previousTrackValues = { ...gameState.tracks };
+}
+
+function refreshAfterNarrativeChoice() {
+    updateStats();
+    renderTracksSequenced();
+    renderTrackNarratives();
+    renderFactions();
+    renderSituationFeed();
+    renderNarrativeSummaryCard();
+    checkSystemPhases();
 }
 
 let gameOverRecorded = false;
