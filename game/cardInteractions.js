@@ -7,7 +7,7 @@ import { gameState } from "./state.js";
 import { log } from "./logger.js";
 import { publishGameEvent } from "./uiEvents.js";
 import { random } from "./rng.js";
-import { shuffleDeck } from "./deck.js";
+import { drawBackingCard } from "./deck.js";
 
 /* ================================================= */
 /* CARD INTERACTION DEFINITIONS                      */
@@ -320,28 +320,29 @@ export function addHiddenCards() {
 }
 
 function drawHiddenCard() {
-    if (gameState.deck.length === 0) {
-        if (gameState.discardPile.length === 0) return null;
-        gameState.deck = shuffleDeck(gameState.discardPile);
-        gameState.discardPile = [];
-    }
-    
-    return gameState.deck.pop();
+    return drawBackingCard();
 }
 
 export function revealHiddenCard(index) {
     const card = gameState.playerHand[index];
     if (!card || !card.hidden) return null;
-    
-    const revealedCard = gameState.interactionState.hiddenCards.shift();
-    if (!revealedCard) return null;
-    
+
+    let revealedCard;
+
+    if (card.backingCard) {
+        // A hidden card dealt from the normal deck carries its own backing draw.
+        revealedCard = { ...card.backingCard, hidden: false };
+        card.backingCard = null;
+    } else {
+        // Hidden placeholders created by addHiddenCards use the shared backing queue.
+        const queuedCard = gameState.interactionState.hiddenCards.shift();
+        if (!queuedCard) return null;
+        revealedCard = { ...queuedCard, hidden: false };
+    }
+
     // Replace hidden card with revealed card
-    gameState.playerHand[index] = {
-        ...revealedCard,
-        hidden: false
-    };
-    
+    gameState.playerHand[index] = revealedCard;
+
     log("HIDDEN_CARD_REVEALED", { 
         cardId: revealedCard.id, 
         title: revealedCard.title 

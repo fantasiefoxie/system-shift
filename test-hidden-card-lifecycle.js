@@ -98,9 +98,8 @@ assert.equal(hiddenPlaceholders[0].suit, "hidden", "hidden placeholder suit shou
 assert.ok(gameState.interactionState.hiddenCards.length > 0, "real cards should be tracked in interactionState.hiddenCards");
 assert.equal(gameState.interactionState.hiddenCards[0].id, 101, "backing card should be the known card (id 101)");
 assert.equal(gameState.deck.length, 0, "the single provided card should be drawn from deck");
-// Note: drawHiddenCard uses shuffleDeck, which is not imported in cardInteractions.js.
-// This is a latent production bug that only triggers when the deck is empty and
-// discardPile is non-empty during hidden-card creation. Tests avoid that path.
+// Note: drawHiddenCard delegates to drawBackingCard, which reshuffles the
+// discard pile when the deck is empty and skips hidden cards as backings.
 
 // 2. Reveal and resolve a hidden card: exact effect application.
 setupState();
@@ -158,7 +157,7 @@ setupState();
 gameState.playerHand = [];
 gameState.deck = [knownCard];
 addHiddenCards();
-// Keep a dummy so addHiddenCards (latent bug: shuffleDeck not imported) is not triggered.
+// Keep a dummy so addHiddenCards is not triggered when the hidden card is played.
 gameState.playerHand.push({ id: 999, suit: "care", title: "Dummy", effects: {}, cost: 0, tags: [] });
 const idx = gameState.playerHand.findIndex(c => c.hidden === true);
 assert.ok(idx >= 0, "should have hidden card");
@@ -201,7 +200,7 @@ setSeed(456);
 gameState.playerHand = [];
 gameState.deck = [knownCard, knownCard];
 addHiddenCards();
-// Keep dummies so addHiddenCards (latent bug) is not triggered.
+// Keep dummies so addHiddenCards is not triggered.
 gameState.playerHand.push({ id: 998, suit: "care", title: "Dummy1", effects: { care: 1 }, cost: 0, tags: [] });
 gameState.playerHand.push({ id: 997, suit: "care", title: "Dummy2", effects: { care: 1 }, cost: 0, tags: [] });
 // Play the hidden card first.

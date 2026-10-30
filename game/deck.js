@@ -142,7 +142,7 @@ export function shuffleDeck(deck) {
 /* DRAW CARD                                        */
 /* ================================================= */
 
-export function drawCard() {
+function drawTopCard() {
 
     if (gameState.deck.length === 0) {
 
@@ -156,13 +156,57 @@ export function drawCard() {
         log("DISCARD_RESHUFFLED", {});
     }
 
-    const card = gameState.deck.pop();
+    return gameState.deck.pop() || null;
+}
 
-    if (card) {
-        log("CARD_DRAWN", { id: card.id, title: card.title });
+/**
+ * Draw a card that can act as the hidden card's backing draw.
+ * Hidden cards are never valid backing draws, so they are temporarily set
+ * aside and returned to the deck afterwards.
+ */
+export function drawBackingCard() {
+
+    const skippedHiddenCards = [];
+
+    try {
+        while (true) {
+            const candidate = drawTopCard();
+            if (!candidate) return null;
+
+            if (candidate.hidden) {
+                skippedHiddenCards.push(candidate);
+                continue;
+            }
+
+            return { ...candidate };
+        }
+    } finally {
+        if (skippedHiddenCards.length > 0) {
+            gameState.deck.push(...skippedHiddenCards);
+        }
+    }
+}
+
+export function drawCard() {
+
+    const card = drawTopCard();
+    if (!card) return null;
+
+    log("CARD_DRAWN", { id: card.id, title: card.title });
+
+    if (!card.hidden) return card;
+
+    // A normal deck hidden card must be dealt with a backing draw. Without one
+    // it would remain an unresolvable face-down card in the player's hand.
+    const backingCard = drawBackingCard();
+    if (!backingCard) {
+        gameState.deck.push(card);
+        log("HIDDEN_CARD_SKIPPED_NO_BACKING", { id: card.id });
+        return null;
     }
 
-    return card;
+    log("HIDDEN_CARD_BACKED", { id: card.id, backingId: backingCard.id });
+    return { ...card, backingCard };
 }
 
 /* ================================================= */

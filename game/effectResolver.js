@@ -50,6 +50,7 @@ export async function resolveCard(index, renderFn) {
         if (!card) return;
 
         // Handle hidden card reveal
+        let resolvedCard = card;
         if (card.hidden) {
             const revealedCard = revealHiddenCard(index);
             if (!revealedCard) {
@@ -61,17 +62,14 @@ export async function resolveCard(index, renderFn) {
                 });
                 return;
             }
-            
-            // Update hand with revealed card
-            gameState.playerHand[index] = revealedCard;
-            card.cost = revealedCard.revealCost || revealedCard.cost;
-            
+
+            resolvedCard = revealedCard;
             playSound("cardReveal");
             await delay(150);
         }
 
-        const effects = { ...card.effects };
-        const cost = Number(card.cost) || 0;
+        const effects = { ...resolvedCard.effects };
+        const cost = Number(resolvedCard.cost) || 0;
 
         const strain = gameState?.tracks?.strain ?? 0;
         const pushback = gameState?.pushback?.value ?? 0;
@@ -116,7 +114,7 @@ export async function resolveCard(index, renderFn) {
         /* 3. Process Card Interactions                 */
         /* --------------------------------------------- */
 
-        const interactions = processCardInteractions(card);
+        const interactions = processCardInteractions(resolvedCard);
         
         // Apply combo bonuses
         interactions.combos.forEach(combo => {
@@ -198,7 +196,7 @@ export async function resolveCard(index, renderFn) {
         /* 5. Structural Surge Bonus                    */
         /* --------------------------------------------- */
 
-        if (card.suit === "authority" || card.suit === "solidarity") {
+        if (resolvedCard.suit === "authority" || resolvedCard.suit === "solidarity") {
             triggerTopBarAnimation("surge", true);
             await delay(baseDelay + 40);
         }
