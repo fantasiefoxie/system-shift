@@ -4841,3 +4841,22 @@ button:active:not(:disabled) {
         min-height: 44px;
     }
 }
+
+/* Mobile game-over: surface the result and Restart before the systems board. */
+@media (max-width: 760px) {
+    #app.layout-portrait.game-over-mode {
+        grid-template-rows: auto max-content auto;
+    }
+
+    #app.layout-portrait.game-over-mode .operations-lore {
+        grid-row: 2;
+    }
+
+    #app.layout-portrait.game-over-mode .systems-board {
+        grid-row: 3;
+    }
+
+    #app.layout-portrait.game-over-mode .game-over {
+        padding: 24px 28px;
+    }
+}

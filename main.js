@@ -1321,6 +1321,14 @@ function renderHand() {
     handDiv.innerHTML = "";
     handDiv.classList.toggle("game-over-active", gameState.gameOver);
 
+    const appEl = document.getElementById("app");
+    if (appEl) {
+        appEl.classList.toggle("game-over-mode", gameState.gameOver);
+        if (gameState.gameOver) {
+            appEl.scrollTop = 0;
+        }
+    }
+
     if (gameState.gameOver) {
         const ending = evaluateOutcome(gameState);
 
