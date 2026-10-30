@@ -1,0 +1,18 @@
+# Local agent configuration
+/.commandcode/
+
+# Local Stitch tooling and generated output
+/err.txt
+/out.txt
+/out3.txt
+/stitch_out.txt
+/stitch_result.json
+/stitch_tools.json
+/stitch_tools_utf8.json
+/tool.txt
+/tool_names.txt
+/upload_stitch.mjs
+/upload_stitch3.mjs
+/upload_stitch4.mjs
+/upload_stitch5.mjs
+/upload_stitch_init.mjs
